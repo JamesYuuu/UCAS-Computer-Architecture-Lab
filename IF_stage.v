@@ -62,8 +62,8 @@ always @(posedge clk) begin
 end
 
 // interface with sram
-assign inst_sram_we     = {4{fs_allowin && ~reset}};
-assign inst_sram_en     = 1'h0;
+assign inst_sram_we     = 4'h0;
+assign inst_sram_en     = fs_allowin && ~reset;
 assign inst_sram_addr   = nextpc;
 assign inst_sram_wdata  = 32'h0;
 assign fs_inst          = inst_sram_rdata;

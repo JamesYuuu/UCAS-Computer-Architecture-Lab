@@ -68,8 +68,8 @@ reg [149:0] ds_to_es_bus_r;
 assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we}=ds_to_es_bus_r;
 assign es_to_ms_bus = {res_from_mem,gr_we,dest,alu_result,pc};
 
-assign data_sram_we    = {4{mem_we && es_valid}};
-assign data_sram_en    = 1'h0;
+assign data_sram_we    = mem_we && es_valid? 4'hF : 4'h0;
+assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = rkd_value;
 
