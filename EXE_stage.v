@@ -32,6 +32,7 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
+reg [149:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -64,7 +65,6 @@ end
 
 
 // deal with input and output
-reg [149:0] ds_to_es_bus_r;
 assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we}=ds_to_es_bus_r;
 assign es_to_ms_bus = {res_from_mem,gr_we,dest,alu_result,pc};
 

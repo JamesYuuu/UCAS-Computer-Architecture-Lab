@@ -3,13 +3,13 @@ module mycpu_top(
     input  wire        resetn,
     // inst sram interface
     output wire        inst_sram_en,
-    output wire [4:0]  inst_sram_we,
+    output wire [3:0]  inst_sram_we,
     output wire [31:0] inst_sram_addr,
     output wire [31:0] inst_sram_wdata,
     input  wire [31:0] inst_sram_rdata,
     // data sram interface
     output wire        data_sram_en,
-    output wire [4:0]  data_sram_we,
+    output wire [3:0]  data_sram_we,
     output wire [31:0] data_sram_addr,
     output wire [31:0] data_sram_wdata,
     input  wire [31:0] data_sram_rdata,

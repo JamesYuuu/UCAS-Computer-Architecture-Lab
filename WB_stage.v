@@ -24,14 +24,14 @@ wire        rf_we   ;
 wire [ 4:0] rf_waddr;
 wire [31:0] rf_wdata;
 
+reg         ws_valid;
+wire        ws_ready_go;
+reg  [69:0] ms_to_ws_bus_r;
+
 assign rf_we    = gr_we && ws_valid;
 assign rf_waddr = dest;
 assign rf_wdata = final_result;
 
-reg         ws_valid;
-wire        ws_ready_go;
-reg  [69:0] ms_to_ws_bus_r;
- 
 assign ws_ready_go = 1'b1;
 assign ws_allowin  = !ws_valid || ws_ready_go;
 always @(posedge clk) begin

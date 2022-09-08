@@ -25,6 +25,7 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
+reg  [70:0] es_to_ms_bus_r;
 
 assign ms_ready_go    = 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
@@ -41,7 +42,6 @@ always @(posedge clk) begin
     end
 end
 // deal with input and output
-reg  [70:0] es_to_ms_bus_r;
 assign {res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 
