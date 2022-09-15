@@ -1,17 +1,19 @@
 module MEM_stage(
-    input               clk,
-    input               reset,
+    input   wire            clk,
+    input   wire            reset,
     // allowin
-    input               ws_allowin,
-    output              ms_allowin,
-    // input from ID stage
-    input               es_to_ms_valid,
-    input   [70:0]      es_to_ms_bus,
-    // output for MEM stage
-    output              ms_to_ws_valid,
-    output  [69:0]      ms_to_ws_bus,
+    input   wire            ws_allowin,
+    output  wire            ms_allowin,
+    // input from EXE stage
+    input   wire            es_to_ms_valid,
+    input   wire [70:0]     es_to_ms_bus,
+    // output for WB stage
+    output  wire            ms_to_ws_valid,
+    output  wire [69:0]     ms_to_ws_bus,
     // data sram interface
-    input  wire [31:0] data_sram_rdata
+    input   wire [31:0]     data_sram_rdata,
+    // output ms_valid and ms_to_ds_bus to ID stage
+    output  wire [6:0]      ms_to_ds_bus
 );
 
 wire        gr_we;
@@ -45,8 +47,9 @@ end
 assign {res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 
-
 assign mem_result   = data_sram_rdata;
 assign final_result = res_from_mem ? mem_result : alu_result;
+
+assign ms_to_ds_bus= {ms_valid,gr_we,dest};
 
 endmodule

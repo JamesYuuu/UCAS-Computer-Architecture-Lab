@@ -3,12 +3,12 @@ module WB_stage(
     input               reset,
     // allowin
     output              ws_allowin,
-    // input from ID stage
+    // input from EXE stage
     input               ms_to_ws_valid,
     input   [69:0]      ms_to_ws_bus,
     // output for reg_file
-    output  [37:0]      rf_bus,
-    //trace debug interface
+    output  [38:0]      rf_bus,
+    // trace debug interface
     output [31:0] debug_wb_pc     ,
     output [ 3:0] debug_wb_rf_we  ,
     output [ 4:0] debug_wb_rf_wnum,
@@ -48,7 +48,7 @@ end
 
 //deal with input and output
 assign {gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
-assign rf_bus={rf_we,rf_waddr,rf_wdata};
+assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
 // debug info generate
 assign debug_wb_pc       = pc;

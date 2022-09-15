@@ -14,7 +14,9 @@ module EXE_stage(
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
     output wire [31:0]  data_sram_addr,
-    output wire [31:0]  data_sram_wdata
+    output wire [31:0]  data_sram_wdata,
+    // output es_valid and bus for ID stage
+    output [6:0]        es_to_ds_bus
 );
 
 wire [11:0] alu_op;
@@ -72,5 +74,7 @@ assign data_sram_we    = mem_we && es_valid? 4'hF : 4'h0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = rkd_value;
+
+assign es_to_ds_bus = {es_valid,gr_we,dest};
 
 endmodule

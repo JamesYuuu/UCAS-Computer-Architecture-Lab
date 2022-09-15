@@ -7,13 +7,16 @@ module ID_stage(
     // input from IF stage
     input           fs_to_ds_valid,
     input   [63:0]  fs_to_ds_bus,
-    // output to EXE stage
+    // output for EXE stage
     output          ds_to_es_valid,
     output  [149:0] ds_to_es_bus,
     // branch bus
-    output  [32:0]  br_bus,
+    output  [33:0]  br_bus,
     // input from WB stage for reg_file
-    input   [37:0]  rf_bus     
+    input   [38:0]  rf_bus,
+    // input for hazard
+    input   [6:0]   ms_to_ds_bus,
+    input   [6:0]   es_to_ds_bus
 );
 
 reg         ds_valid;
@@ -25,6 +28,7 @@ wire [31:0] ds_inst;
 
 wire        br_taken;
 wire [31:0] br_target;
+wire        br_taken_cancel;
 
 wire [11:0] alu_op;
 wire        src1_is_pc;
@@ -93,6 +97,21 @@ wire [31:0] rf_rdata2;
 wire        rf_we   ;
 wire [ 4:0] rf_waddr;
 wire [31:0] rf_wdata;
+
+wire [4:0]  ms_addr;
+wire [4:0]  es_addr;
+wire        ms_we;
+wire        es_we;
+wire        src1_hazard;
+wire        src2_hazard;
+wire        either_hazard;
+wire        hazard;
+wire        both_src;
+wire        src1;
+wire        src2;
+wire        ms_valid;
+wire        es_valid;
+wire        ws_valid;
 
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
@@ -210,26 +229,53 @@ assign br_taken = (   inst_beq  &&  rj_eq_rd
 assign br_target = (inst_beq || inst_bne || inst_bl || inst_b) ? (ds_pc + br_offs) :
                                                    /*inst_jirl*/ (rj_value + jirl_offs);
 // deal with input and output
-assign br_bus                    = {br_taken,br_target};
+assign br_bus                    = {br_taken_cancel,br_taken,br_target};
 assign {ds_inst,ds_pc}           = fs_to_ds_bus_r;
 
-assign {rf_we,rf_waddr,rf_wdata} = rf_bus;
+assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
 assign ds_to_es_bus              = {alu_op,src1_is_pc,ds_pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we};
 
-assign ds_ready_go      = 1'b1;
-assign ds_allowin      = !ds_valid || ds_ready_go && es_allowin;
+assign ds_ready_go      = !hazard ;
+assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
+assign br_taken_cancel  = br_taken && ds_ready_go;
 always @(posedge clk) begin
-    if (reset || br_taken) begin
+    if (reset) begin
+        ds_valid <=1'b0;
+    end
+    else if (br_taken_cancel) begin
         ds_valid <=1'b0;
     end
     else if (ds_allowin) begin
         ds_valid <= fs_to_ds_valid;
     end
+end
+
+always @(posedge clk) begin
     if (fs_to_ds_valid && ds_allowin) begin
         fs_to_ds_bus_r <= fs_to_ds_bus;
     end
 end
 
+assign {ms_valid,ms_we,ms_addr} = ms_to_ds_bus;
+assign {es_valid,es_we,es_addr} = es_to_ds_bus;
 
+
+assign src1_hazard = (rf_raddr1 == 5'b0) ? 1'b0:
+                     (rf_raddr1 == ms_addr && ms_we && ms_valid) ? 1'b1:
+                     (rf_raddr1 == es_addr && es_we && es_valid) ? 1'b1:
+                     (rf_raddr1 == rf_waddr && rf_we && ws_valid) ? 1'b1 : 1'b0;
+assign src2_hazard = (rf_raddr2 == 5'b0) ? 1'b0:
+                     (rf_raddr2 == ms_addr && ms_we && ms_valid) ? 1'b1:
+                     (rf_raddr2 == es_addr && es_we && es_valid) ? 1'b1:
+                     (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? 1'b1 : 1'b0; 
+
+assign either_hazard = src1_hazard || src2_hazard;
+assign both_src = inst_add_w || inst_sub_w || inst_slt || inst_nor || inst_and || inst_or || inst_xor || inst_beq || inst_bne || inst_sltu;
+assign src1 = inst_slli_w || inst_srli_w || inst_srai_w || inst_addi_w || inst_jirl ;
+assign src2 = inst_st_w;
+
+assign hazard      = (both_src && either_hazard) ? 1'b1:
+                     (src1     && src1_hazard) ?   1'b1: 
+                     (src2     && src2_hazard) ?   1'b1: 1'b0;
 endmodule

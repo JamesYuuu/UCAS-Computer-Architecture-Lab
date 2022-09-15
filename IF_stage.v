@@ -4,7 +4,7 @@ module IF_stage(
     // allowin from ID stage
     input           ds_allowin,
     // branch bus
-    input   [32:0]  br_bus,
+    input   [33:0]  br_bus,
     // output to ID stage
     output          fs_to_ds_valid,
     output  [63:0]  fs_to_ds_bus,
@@ -27,7 +27,8 @@ wire [31:0] nextpc;
 // signals from branch
 wire        br_taken;
 wire [31:0] br_target;
-assign {br_taken,br_target} = br_bus;
+wire        br_taken_cancel;
+assign {br_taken_cancel,br_taken,br_target} = br_bus;
 
 // signals to output for ID_stage
 wire [31:0] fs_inst;
@@ -40,7 +41,7 @@ assign nextpc       = br_taken ? br_target : seq_pc;
 
 // IF stage
 assign fs_ready_go     = 1'b1;
-assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
+assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin;
 assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 always @(posedge clk) begin
     if (reset) begin
@@ -48,6 +49,9 @@ always @(posedge clk) begin
     end
     else if (fs_allowin) begin
         fs_valid <= 1'b1;
+    end
+    else if (br_taken_cancel) begin
+        fs_valid <= 1'b0;
     end
 end
 
