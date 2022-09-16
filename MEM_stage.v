@@ -13,7 +13,7 @@ module MEM_stage(
     // data sram interface
     input   wire [31:0]     data_sram_rdata,
     // output ms_valid and ms_to_ds_bus to ID stage
-    output  wire [6:0]      ms_to_ds_bus
+    output                  out_ms_valid
 );
 
 wire        gr_we;
@@ -50,6 +50,7 @@ assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 assign mem_result   = data_sram_rdata;
 assign final_result = res_from_mem ? mem_result : alu_result;
 
-assign ms_to_ds_bus= {ms_valid,gr_we,dest};
+wire   out_ms_valid;
+assign out_ms_valid = ms_valid;
 
 endmodule

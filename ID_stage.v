@@ -16,7 +16,11 @@ module ID_stage(
     input   [38:0]  rf_bus,
     // input for hazard
     input   [6:0]   ms_to_ds_bus,
-    input   [6:0]   es_to_ds_bus
+    input   [6:0]   es_to_ds_bus,
+    input           out_ms_valid,
+    input           out_es_valid,
+    input   [69:0]  ms_to_ws_bus,
+    input   [70:0]  es_to_ms_bus
 );
 
 reg         ds_valid;
@@ -112,6 +116,9 @@ wire        src2;
 wire        ms_valid;
 wire        es_valid;
 wire        ws_valid;
+wire        es_res_from_mem;
+wire [31:0] es_result;
+wire [31:0] ms_result;
 
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
@@ -216,8 +223,8 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
-assign rj_value  = rf_rdata1;
-assign rkd_value = rf_rdata2;
+// assign rj_value  = rf_rdata1;
+// assign rkd_value = rf_rdata2;
 
 assign rj_eq_rd = (rj_value == rkd_value);
 assign br_taken = (   inst_beq  &&  rj_eq_rd
@@ -235,7 +242,7 @@ assign {ds_inst,ds_pc}           = fs_to_ds_bus_r;
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
 assign ds_to_es_bus              = {alu_op,src1_is_pc,ds_pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we};
 
-assign ds_ready_go      = !hazard ;
+assign ds_ready_go      = !(hazard && es_res_from_mem && es_valid);
 assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
@@ -257,10 +264,13 @@ always @(posedge clk) begin
     end
 end
 
-assign {ms_valid,ms_we,ms_addr} = ms_to_ds_bus;
-assign {es_valid,es_we,es_addr} = es_to_ds_bus;
+assign ms_valid = out_ms_valid;
+assign es_valid = out_es_valid;
 
+assign {es_res_from_mem,es_we,es_addr,es_result} = es_to_ms_bus[70:32];
+assign {ms_we,ms_addr,ms_result} = ms_to_ws_bus[69:32];
 
+// read after write hazard
 assign src1_hazard = (rf_raddr1 == 5'b0) ? 1'b0:
                      (rf_raddr1 == ms_addr && ms_we && ms_valid) ? 1'b1:
                      (rf_raddr1 == es_addr && es_we && es_valid) ? 1'b1:
@@ -278,4 +288,14 @@ assign src2 = inst_st_w;
 assign hazard      = (both_src && either_hazard) ? 1'b1:
                      (src1     && src1_hazard) ?   1'b1: 
                      (src2     && src2_hazard) ?   1'b1: 1'b0;
+
+// data forward
+assign rj_value  = (rf_raddr1 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
+                   (rf_raddr1 == ms_addr && ms_we && out_ms_valid)? ms_result:
+                   (rf_raddr1 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata1;
+
+assign rkd_value = (rf_raddr2 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
+                   (rf_raddr2 == ms_addr && ms_we && out_ms_valid)? ms_result:
+                   (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
+
 endmodule

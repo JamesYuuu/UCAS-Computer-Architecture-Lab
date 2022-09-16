@@ -37,8 +37,8 @@ wire [70:0]  es_to_ms_bus;
 wire [69:0]  ms_to_ws_bus;
 wire [38:0]  rf_bus;
 wire [33:0]  br_bus;
-wire [6:0]   ms_to_ds_bus;
-wire [6:0]   es_to_ds_bus;
+wire         out_ms_valid;
+wire         out_es_valid;
 
 // IF stage
 IF_stage IF_stage(
@@ -76,8 +76,10 @@ ID_stage ID_stage(
     // rf bus
     .rf_bus         (rf_bus         ),
     // input for hazard
-    .es_to_ds_bus   (es_to_ds_bus   ),
-    .ms_to_ds_bus   (ms_to_ds_bus   )
+    .out_es_valid   (out_es_valid   ),
+    .out_ms_valid   (out_ms_valid   ),
+    .ms_to_ws_bus   (ms_to_ws_bus   ),
+    .es_to_ms_bus   (es_to_ms_bus   )
 );
 // EXE stage
 EXE_stage EXE_stage(
@@ -98,7 +100,7 @@ EXE_stage EXE_stage(
     .data_sram_addr (data_sram_addr ),
     .data_sram_wdata(data_sram_wdata),
     // output es_to_ds_bus to ID stage
-    .es_to_ds_bus   (es_to_ds_bus   )
+    .out_es_valid   (out_es_valid   )    
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -116,7 +118,7 @@ MEM_stage MEM_stage(
     //from data-sram
     .data_sram_rdata(data_sram_rdata),
     // output ms_to_ds_bus for ID stage
-    .ms_to_ds_bus   (ms_to_ds_bus   )
+    .out_ms_valid   (out_ms_valid   )
 );
 // WB stage
 WB_stage WB_stage(
