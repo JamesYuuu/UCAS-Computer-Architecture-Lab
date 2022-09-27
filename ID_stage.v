@@ -15,8 +15,6 @@ module ID_stage(
     // input from WB stage for reg_file
     input   [38:0]  rf_bus,
     // input for hazard
-    input   [6:0]   ms_to_ds_bus,
-    input   [6:0]   es_to_ds_bus,
     input           out_ms_valid,
     input           out_es_valid,
     input   [69:0]  ms_to_ws_bus,

@@ -58,7 +58,7 @@ end
 // PC update
 always @(posedge clk) begin
     if (reset) begin
-        fs_pc <= 32'h1BFFFFFC;  // make nexpc=0x1C000000;
+        fs_pc <= 32'h1BFFFFFC;  // make nextpc=0x1C000000;
     end
     else if (fs_allowin) begin
         fs_pc <= nextpc;
