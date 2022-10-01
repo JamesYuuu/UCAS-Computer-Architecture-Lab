@@ -74,8 +74,7 @@ assign data_sram_we    = mem_we && es_valid? 4'hF : 4'h0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = rkd_value;
-
-wire   out_es_valid;
+//redeclaration?
 assign out_es_valid = es_valid;
 
 endmodule

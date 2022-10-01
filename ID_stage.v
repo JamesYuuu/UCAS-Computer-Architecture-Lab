@@ -158,29 +158,75 @@ assign inst_beq    = op_31_26_d[6'h16];
 assign inst_bne    = op_31_26_d[6'h17];
 assign inst_lu12i_w= op_31_26_d[6'h05] & ~ds_inst[25];
 
-assign alu_op[ 0] = inst_add_w | inst_addi_w | inst_ld_w | inst_st_w
-                    | inst_jirl | inst_bl;
-assign alu_op[ 1] = inst_sub_w;
-assign alu_op[ 2] = inst_slt;
-assign alu_op[ 3] = inst_sltu;
-assign alu_op[ 4] = inst_and;
-assign alu_op[ 5] = inst_nor;
-assign alu_op[ 6] = inst_or;
-assign alu_op[ 7] = inst_xor;
-assign alu_op[ 8] = inst_slli_w;
-assign alu_op[ 9] = inst_srli_w;
-assign alu_op[10] = inst_srai_w;
-assign alu_op[11] = inst_lu12i_w;
+// bob add below
+wire inst_slti;
+wire inst_sltui;
+wire inst_andi;
+wire inst_ori;
+wire inst_xori;
+wire inst_sll_w;
+wire inst_srl_w;
+wire inst_sra_w;
+wire inst_pcaddu12i;
+
+wire inst_mul_w;
+wire inst_mulh_w;
+wire inst_mulh_wu;
+
+wire inst_div_w;
+wire inst_mod_w;
+wire inst_div_wu;
+wire inst_mod_wu;
+
+assign inst_slti    = op_31_26_d[6'b000000] & op_25_22_d[4'b1000];
+assign inst_sltui   = op_31_26_d[6'b000000] & op_25_22_d[4'b1001];
+assign inst_andi    = op_31_26_d[6'b000000] & op_25_22_d[4'b1101];
+assign inst_ori     = op_31_26_d[6'b000000] & op_25_22_d[4'b1110];
+assign inst_xori    = op_31_26_d[6'b000000] & op_25_22_d[4'b1111];
+assign inst_sll_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b01110];
+assign inst_srl_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b01111];
+assign inst_sra_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b10000];
+assign inst_pcaddu12i = op_31_26_d[6'b000111] & ~ds_inst[25];
+
+assign inst_mul_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b11000];
+assign inst_mulh_w  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b11001];
+assign inst_mulh_wu = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b01] & op_19_15_d[5'b11010];
+
+assign inst_div_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00000];
+assign inst_mod_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00001];
+assign inst_div_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00010];
+assign inst_mod_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00011];
+wire need_ui12;
+wire rj_eq_rd;
+// bob add above
+
+assign alu_op[ 0] = inst_add_w  | inst_addi_w   | inst_ld_w | inst_st_w
+                                | inst_jirl     | inst_bl   | inst_pcaddu12i;   //and
+assign alu_op[ 1] = inst_sub_w;                                                 //sub
+assign alu_op[ 2] = inst_slt    | inst_slti;                                    //slt
+assign alu_op[ 3] = inst_sltu   | inst_sltui;                                   //sltu
+assign alu_op[ 4] = inst_and    | inst_andi;                                    //and
+assign alu_op[ 5] = inst_nor;                                                   //nor
+assign alu_op[ 6] = inst_or     | inst_ori;                                     //or
+assign alu_op[ 7] = inst_xor    | inst_xori;                                    //xor
+assign alu_op[ 8] = inst_slli_w | inst_sll_w;                                   //sll
+assign alu_op[ 9] = inst_srli_w | inst_srl_w;                                   //srl
+assign alu_op[10] = inst_srai_w | inst_sra_w;                                   //sra
+assign alu_op[11] = inst_lu12i_w;                                               //lu12i
 
 assign need_ui5   =  inst_slli_w | inst_srli_w | inst_srai_w;
-assign need_si12  =  inst_addi_w | inst_ld_w | inst_st_w;
+assign need_si12  =  inst_addi_w | inst_ld_w | inst_st_w | inst_slti | inst_sltui;
 assign need_si16  =  inst_jirl | inst_beq | inst_bne;
-assign need_si20  =  inst_lu12i_w;
+assign need_si20  =  inst_lu12i_w | inst_pcaddu12i;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
+//bob add below
+assign need_ui12  =  inst_andi | inst_ori | inst_xori;
+//bob add above
 
 assign imm = src2_is_4 ? 32'h4                      :
              need_si20 ? {i20[19:0], 12'b0}         :
+             need_ui12 ? {20'b0, i12[11:0]}         :
 /*need_ui5 || need_si12*/{{20{i12[11]}}, i12[11:0]} ;
 
 assign br_offs = need_si26 ? {{4{i26[25]}}, i26[25:0], 2'b0} : 
@@ -190,7 +236,7 @@ assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
 assign src_reg_is_rd = inst_beq | inst_bne | inst_st_w ; 
 
-assign src1_is_pc    = inst_jirl | inst_bl;
+assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
 assign src2_is_imm   = inst_slli_w |
                        inst_srli_w |
@@ -200,7 +246,13 @@ assign src2_is_imm   = inst_slli_w |
                        inst_st_w   |
                        inst_lu12i_w|
                        inst_jirl   |
-                       inst_bl     ; 
+                       inst_bl     |
+                       inst_slti   |
+                       inst_sltui  |
+                       inst_andi   |
+                       inst_ori    |
+                       inst_xori   |
+                       inst_pcaddu12i; 
 
 assign res_from_mem  = inst_ld_w;
 assign dst_is_r1     = inst_bl;
@@ -238,7 +290,7 @@ assign br_bus                    = {br_taken_cancel,br_taken,br_target};
 assign {ds_inst,ds_pc}           = fs_to_ds_bus_r;
 
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
-assign ds_to_es_bus              = {alu_op,src1_is_pc,ds_pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we};
+assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we};
 
 assign ds_ready_go      = !(hazard && es_res_from_mem && es_valid);
 assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;
@@ -279,8 +331,8 @@ assign src2_hazard = (rf_raddr2 == 5'b0) ? 1'b0:
                      (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? 1'b1 : 1'b0; 
 
 assign either_hazard = src1_hazard || src2_hazard;
-assign both_src = inst_add_w || inst_sub_w || inst_slt || inst_nor || inst_and || inst_or || inst_xor || inst_beq || inst_bne || inst_sltu;
-assign src1 = inst_slli_w || inst_srli_w || inst_srai_w || inst_addi_w || inst_jirl ;
+assign both_src = inst_add_w || inst_sub_w || inst_slt || inst_nor || inst_and || inst_or || inst_xor || inst_beq || inst_bne || inst_sltu || inst_sll_w || inst_srl_w || inst_sra_w || inst_mul_w || inst_mulh_w || inst_mulh_wu || inst_div_w || inst_mod_w || inst_div_wu || inst_mod_wu;
+assign src1 = inst_slli_w || inst_srli_w || inst_srai_w || inst_addi_w || inst_jirl || inst_slti || inst_sltui || inst_andi || inst_ori || inst_xori;
 assign src2 = inst_st_w;
 
 assign hazard      = (both_src && either_hazard) ? 1'b1:
