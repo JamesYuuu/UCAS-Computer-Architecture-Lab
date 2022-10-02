@@ -198,7 +198,26 @@ assign inst_div_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2
 assign inst_mod_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00011];
 wire need_ui12;
 wire rj_eq_rd;
+wire rj_above_rd;
+wire rj_above_rd_u;
 // bob add above
+
+// code by JamesYu
+// add new branch inst
+wire    inst_blt;
+wire    inst_bge;
+wire    inst_bltu;
+wire    inst_bgeu;
+wire    br_con;
+wire    br_uncon;
+
+assign  inst_blt   = op_31_26_d[6'b011000];
+assign  inst_bge   = op_31_26_d[6'b011001];
+assign  inst_bltu  = op_31_26_d[6'b011010];
+assign  inst_bgeu  = op_31_26_d[6'b011011];
+assign  br_con     = inst_blt | inst_bge | inst_bgeu | inst_bltu | inst_bne | inst_beq;
+assign  br_uncon   = inst_bl | inst_b;
+
 
 assign alu_op[ 0] = inst_add_w  | inst_addi_w   | inst_ld_w | inst_st_w
                                 | inst_jirl     | inst_bl   | inst_pcaddu12i;   //and
@@ -216,7 +235,7 @@ assign alu_op[11] = inst_lu12i_w;                                               
 
 assign need_ui5   =  inst_slli_w | inst_srli_w | inst_srai_w;
 assign need_si12  =  inst_addi_w | inst_ld_w | inst_st_w | inst_slti | inst_sltui;
-assign need_si16  =  inst_jirl | inst_beq | inst_bne;
+assign need_si16  =  inst_jirl | br_con ;
 assign need_si20  =  inst_lu12i_w | inst_pcaddu12i;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
@@ -234,7 +253,7 @@ assign br_offs = need_si26 ? {{4{i26[25]}}, i26[25:0], 2'b0} :
 
 assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
-assign src_reg_is_rd = inst_beq | inst_bne | inst_st_w ; 
+assign src_reg_is_rd = br_con | inst_st_w ; 
 
 assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
@@ -256,7 +275,7 @@ assign src2_is_imm   = inst_slli_w |
 
 assign res_from_mem  = inst_ld_w;
 assign dst_is_r1     = inst_bl;
-assign gr_we         = ~inst_st_w & ~inst_beq & ~inst_bne & ~inst_b;
+assign gr_we         = ~inst_st_w & ~inst_b & ~br_con;
 assign mem_we        = inst_st_w;
 assign dest          = dst_is_r1 ? 5'd1 : rd;
 
@@ -276,15 +295,21 @@ regfile u_regfile(
 // assign rj_value  = rf_rdata1;
 // assign rkd_value = rf_rdata2;
 
-assign rj_eq_rd = (rj_value == rkd_value);
+assign rj_eq_rd      = (rj_value == rkd_value);
+assign rj_above_rd   = ($signed(rj_value) >= $signed(rkd_value));
+assign rj_above_rd_u = (rj_value >= rkd_value);
+
 assign br_taken = (   inst_beq  &&  rj_eq_rd
                    || inst_bne  && !rj_eq_rd
+                   || inst_bge  &&  rj_above_rd
+                   || inst_bgeu &&  rj_above_rd_u
+                   || inst_blt  && !rj_above_rd
+                   || inst_bltu && !rj_above_rd_u 
                    || inst_jirl
                    || inst_bl
                    || inst_b
                   ) && ds_valid;
-assign br_target = (inst_beq || inst_bne || inst_bl || inst_b) ? (ds_pc + br_offs) :
-                                                   /*inst_jirl*/ (rj_value + jirl_offs);
+assign br_target = (br_con || br_uncon) ? (ds_pc + br_offs) : /*inst_jirl*/ (rj_value + jirl_offs);
 // deal with input and output
 assign br_bus                    = {br_taken_cancel,br_taken,br_target};
 assign {ds_inst,ds_pc}           = fs_to_ds_bus_r;
