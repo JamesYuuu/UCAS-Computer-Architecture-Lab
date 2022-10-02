@@ -9,7 +9,7 @@ module ID_stage(
     input   [63:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [149:0] ds_to_es_bus,
+    output  [156:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -290,7 +290,11 @@ assign br_bus                    = {br_taken_cancel,br_taken,br_target};
 assign {ds_inst,ds_pc}           = fs_to_ds_bus_r;
 
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
-assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we};
+
+// add div and mul inst
+wire [6:0] divmul_op;
+assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div_w,inst_mod_w,inst_div_wu,inst_mod_wu};
+assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op};
 
 assign ds_ready_go      = !(hazard && es_res_from_mem && es_valid);
 assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;

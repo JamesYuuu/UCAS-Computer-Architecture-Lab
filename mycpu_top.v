@@ -32,7 +32,7 @@ wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
 wire [63:0]  fs_to_ds_bus;
-wire [149:0] ds_to_es_bus;
+wire [156:0] ds_to_es_bus;
 wire [70:0]  es_to_ms_bus;
 wire [69:0]  ms_to_ws_bus;
 wire [38:0]  rf_bus;
