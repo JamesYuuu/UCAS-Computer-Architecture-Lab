@@ -49,21 +49,9 @@ alu u_alu(
 reg     es_valid;
 wire    es_ready_go;
 
-assign es_ready_go    = 1'b1;
-assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
-assign es_to_ms_valid =  es_valid && es_ready_go;
 
-always @(posedge clk) begin
-    if (reset) begin
-        es_valid <= 1'b0;
-    end
-    else if (es_allowin) begin
-        es_valid <= ds_to_es_valid;
-    end
-    if (ds_to_es_valid && es_allowin) begin
-        ds_to_es_bus_r <= ds_to_es_bus;
-    end
-end
+
+
 
 // code by JamesYu
 // add control signals
@@ -93,6 +81,102 @@ assign mul_result = (inst_mul_w) ? signed_result[31:0] : signed_result[63:32];
 
 // add divison support
 wire [31:0] div_result;
+
+//bob add div part
+reg div_signed_valid;
+reg div_unsigned_valid;
+reg div_signed_got;
+reg div_unsigned_got;
+wire div_signed_ready_divisor;
+wire div_signed_ready_dividend;
+wire div_unsigned_ready_divisor;
+wire div_unsigned_ready_dividend;
+wire div_signed_result_valid;
+wire div_unsigned_result_valid;
+wire [31:0] div_signed_result;
+wire [31:0] mod_signed_result;
+wire [31:0] div_unsigned_result;
+wire [31:0] mod_unsigned_result;
+
+always @ (posedge clk)
+begin
+    if(inst_div_w | inst_mod_w)
+    begin
+        if(div_signed_ready_divisor && div_signed_ready_dividend)
+        begin
+            div_signed_valid <= 0;
+            div_signed_got <= 1;
+        end
+        else if(~div_signed_got)
+        begin
+            div_signed_valid <= 1;
+        end        
+        if(div_signed_got && div_signed_result_valid)
+            div_signed_got <= 0;
+    end
+    else if(inst_div_wu | inst_mod_wu)
+    begin
+        if(div_unsigned_ready_divisor && div_unsigned_ready_dividend)
+        begin
+            div_unsigned_valid <= 0;
+            div_unsigned_got <= 1;
+        end
+        else if(~div_unsigned_got)
+        begin
+            div_unsigned_valid <= 1;
+        end
+
+        if(div_unsigned_got && div_unsigned_result_valid)
+            div_unsigned_got <= 0;
+    end
+end
+
+module_div_signed div_signed(
+                    .s_axis_divisor_tdata(alu_src2), 
+                    .s_axis_divisor_tready(div_signed_ready_divisor),
+                    .s_axis_divisor_tvalid(div_signed_valid),
+                    .s_axis_dividend_tdata(alu_src1),
+                    .s_axis_dividend_tready(div_signed_ready_dividend),
+                    .s_axis_dividend_tvalid(div_signed_valid),
+                    .m_axis_dout_tdata({div_signed_result, mod_signed_result}),
+                    .m_axis_dout_tvalid(div_signed_result_valid),
+                    .aclk(clk)
+                 );
+
+module_div_unsigned div_unsigned(
+                    .s_axis_divisor_tdata(alu_src2), 
+                    .s_axis_divisor_tready(div_unsigned_ready_divisor),
+                    .s_axis_divisor_tvalid(div_unsigned_valid),
+                    .s_axis_dividend_tdata(alu_src1),
+                    .s_axis_dividend_tready(div_unsigned_ready_dividend),
+                    .s_axis_dividend_tvalid(div_unsigned_valid),
+                    .m_axis_dout_tdata({div_unsigned_result, mod_unsigned_result}),
+                    .m_axis_dout_tvalid(div_unsigned_result_valid),
+                    .aclk(clk)
+                 );
+
+assign div_result = inst_div_w ? div_signed_result :
+                    inst_mod_w ? mod_signed_result :
+                    inst_div_wu? div_unsigned_result :
+                    inst_mod_wu? mod_unsigned_result : 0;
+//bob add div part
+always @(posedge clk) begin
+    if (reset) begin
+        es_valid <= 1'b0;
+        div_signed_got <= 1'b0;
+        div_unsigned_got <= 1'b0;
+    end
+    else if (es_allowin) begin
+        es_valid <= ds_to_es_valid;
+    end
+    if (ds_to_es_valid && es_allowin) begin
+        ds_to_es_bus_r <= ds_to_es_bus;
+    end
+end
+
+assign es_ready_go    = ~((inst_div_w | inst_mod_w) && (~div_signed_result_valid)) & ~((inst_div_wu | inst_mod_wu) && (~div_unsigned_result_valid));
+assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
+assign es_to_ms_valid =  es_valid && es_ready_go;
 
 // add result select
 wire [31:0] write_result;

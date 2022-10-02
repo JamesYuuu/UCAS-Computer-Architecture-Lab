@@ -50,7 +50,6 @@ assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 assign mem_result   = data_sram_rdata;
 assign final_result = res_from_mem ? mem_result : alu_result;
 
-wire   out_ms_valid;
 assign out_ms_valid = ms_valid;
 
 endmodule
