@@ -49,10 +49,6 @@ alu u_alu(
 reg     es_valid;
 wire    es_ready_go;
 
-
-
-
-
 // code by JamesYu
 // add control signals
 wire [6:0] divmul_op;
@@ -75,7 +71,7 @@ wire [32:0] mul_src2;
 wire [65:0] signed_result;
 wire [31:0] mul_result;
 assign mul_src1 = (inst_mulh_w) ? {alu_src1[31],alu_src1} : {1'b0,alu_src1};
-assign mul_src2 = (inst_mulh_w) ? {alu_src1[31],alu_src1} : {1'b0,alu_src1};
+assign mul_src2 = (inst_mulh_w) ? {alu_src2[31],alu_src2} : {1'b0,alu_src2};
 assign signed_result = $signed(mul_src1) * $signed(mul_src2);
 assign mul_result = (inst_mul_w) ? signed_result[31:0] : signed_result[63:32];
 
