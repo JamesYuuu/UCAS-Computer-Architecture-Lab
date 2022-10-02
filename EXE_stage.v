@@ -107,7 +107,7 @@ begin
         begin
             div_signed_valid <= 1;
         end        
-        if(div_signed_got && div_signed_result_valid)
+        else if(div_signed_got && div_signed_result_valid)
             div_signed_got <= 0;
     end
     else if(inst_div_wu | inst_mod_wu)
@@ -121,9 +121,13 @@ begin
         begin
             div_unsigned_valid <= 1;
         end
-
-        if(div_unsigned_got && div_unsigned_result_valid)
+        else if(div_unsigned_got && div_unsigned_result_valid)
             div_unsigned_got <= 0;
+    end
+    else
+    begin
+        div_signed_got <= 0;
+        div_unsigned_got <= 0;
     end
 end
 
@@ -159,8 +163,6 @@ assign div_result = inst_div_w ? div_signed_result :
 always @(posedge clk) begin
     if (reset) begin
         es_valid <= 1'b0;
-        div_signed_got <= 1'b0;
-        div_unsigned_got <= 1'b0;
     end
     else if (es_allowin) begin
         es_valid <= ds_to_es_valid;
