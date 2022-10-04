@@ -6,10 +6,10 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [156:0]     ds_to_es_bus,
+    input   [167:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [70:0]      es_to_ms_bus,
+    output  [75:0]      es_to_ms_bus,
     // data sram interface
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
@@ -34,7 +34,7 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
-reg [156:0] ds_to_es_bus_r;
+reg [167:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -93,6 +93,13 @@ wire [31:0] div_signed_result;
 wire [31:0] mod_signed_result;
 wire [31:0] div_unsigned_result;
 wire [31:0] mod_unsigned_result;
+
+// add st support
+wire [31:0] st_data;
+wire inst_st_b;
+wire inst_st_h;
+wire inst_st_w;
+wire [4:0] ld_op;
 
 always @ (posedge clk)
 begin
@@ -182,13 +189,22 @@ assign write_result = (is_mul) ? mul_result :
                       (is_div) ? div_result :   alu_result;
 
 // deal with input and output
-assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op}=ds_to_es_bus_r;
-assign es_to_ms_bus = {res_from_mem,gr_we,dest,write_result,pc};
+assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op}=ds_to_es_bus_r;
+assign es_to_ms_bus = {ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
-assign data_sram_we    = es_valid ? mem_we : 4'b0;//mem_we && es_valid? 4'hF : 4'h0;
+// add support for sd
+// code by JamesYu
+assign {inst_st_b,inst_st_h,inst_st,w} = ldst_op[2:0];
+assign ld_op = ldst_op[7:3];
+
+assign st_data = inst_st_b ? {4{rkd_value[ 7:0]}} :
+                 inst_st_h ? {2{rkd_value[15:0]}} : rkd_value[31:0];
+
+
+assign data_sram_we    = es_valid ? mem_we : 4'b0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
-assign data_sram_wdata = rkd_value;
+assign data_sram_wdata = st_data;
 
 assign out_es_valid = es_valid;
 

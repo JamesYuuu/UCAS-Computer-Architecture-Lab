@@ -6,7 +6,7 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [70:0]     es_to_ms_bus,
+    input   wire [75:0]     es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
     output  wire [69:0]     ms_to_ws_bus,
@@ -27,7 +27,17 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg  [70:0] es_to_ms_bus_r;
+reg  [75:0] es_to_ms_bus_r;
+
+// add ld op
+wire [4:0] ld_op;
+wire       inst_ld_b;
+wire       inst_ld_bu;
+wire       inst_ld_h;
+wire       inst_ld_hu;
+wire       inst_ld_w; 
+
+assign {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w}=ld_op;
 
 assign ms_ready_go    = 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
@@ -44,7 +54,7 @@ always @(posedge clk) begin
     end
 end
 // deal with input and output
-assign {res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
+assign {ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 
 assign mem_result   = data_sram_rdata;
