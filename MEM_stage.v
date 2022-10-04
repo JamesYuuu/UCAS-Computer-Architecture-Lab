@@ -57,7 +57,30 @@ end
 assign {ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={gr_we,dest,final_result,pc};
 
-assign mem_result   = data_sram_rdata;
+//bobbbbbbbbbby add below
+wire [31:0] ld_b_result;
+wire [31:0] ld_bu_result;
+wire [31:0] ld_h_result;
+wire [31:0] ld_hu_result;
+wire [1:0]  sel;
+assign sel = alu_result[1:0];
+assign ld_b_result = (sel == 2'b00) ? {{24{data_sram_rdata[7]}}, data_sram_rdata[7:0]} :
+                     (sel == 2'b01) ? {{24{data_sram_rdata[15]}}, data_sram_rdata[15:8]} :
+                     (sel == 2'b10) ? {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]} :
+                     (sel == 2'b11) ? {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]} : 0;
+assign ld_bu_result = (sel == 2'b00) ? {{24'b0}, data_sram_rdata[7:0]} :
+                      (sel == 2'b01) ? {{24'b0}, data_sram_rdata[15:8]} :
+                      (sel == 2'b10) ? {{24'b0}, data_sram_rdata[23:16]} :
+                      (sel == 2'b11) ? {{24'b0}, data_sram_rdata[31:24]} : 0;
+assign ld_h_result = (sel == 2'b00) ? {{16{data_sram_rdata[15]}}, data_sram_rdata[15:0]} :
+                     (sel == 2'b10) ? {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]}: 0;
+assign ld_hu_result = (sel == 2'b00) ? {{16'b0}, data_sram_rdata[15:0]} : 
+                      (sel == 2'b10) ? {{16'b0}, data_sram_rdata[31:16]} : 0;
+//bobbbbbbbbbby add above
+assign mem_result   =   inst_ld_b   ? ld_b_result : 
+                        inst_ld_bu  ? ld_bu_result:
+                        inst_ld_h   ? ld_h_result :
+                        inst_ld_hu  ? ld_hu_result: data_sram_rdata;
 assign final_result = res_from_mem ? mem_result : alu_result;
 
 assign out_ms_valid = ms_valid;
