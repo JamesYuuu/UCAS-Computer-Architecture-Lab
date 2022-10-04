@@ -24,7 +24,7 @@ wire        src1_is_pc;
 wire        src2_is_imm;
 wire        gr_we;
 wire        res_from_mem;
-wire        mem_we;
+wire [3: 0] mem_we;
 wire [31:0] pc;
 wire [4: 0] dest;
 wire [31:0] rj_value;
@@ -100,7 +100,7 @@ wire inst_st_b;
 wire inst_st_h;
 wire inst_st_w;
 wire [4:0] ld_op;
-
+wire [7:0] ldst_op;
 always @ (posedge clk)
 begin
     if(inst_div_w | inst_mod_w)
@@ -194,7 +194,7 @@ assign es_to_ms_bus = {ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 // add support for sd
 // code by JamesYu
-assign {inst_st_b,inst_st_h,inst_st,w} = ldst_op[2:0];
+assign {inst_st_b,inst_st_h,inst_st_w} = ldst_op[2:0];
 assign ld_op = ldst_op[7:3];
 
 assign st_data = inst_st_b ? {4{rkd_value[ 7:0]}} :
