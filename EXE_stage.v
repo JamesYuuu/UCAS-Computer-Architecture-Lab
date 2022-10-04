@@ -200,8 +200,12 @@ assign ld_op = ldst_op[7:3];
 assign st_data = inst_st_b ? {4{rkd_value[ 7:0]}} :
                  inst_st_h ? {2{rkd_value[15:0]}} : rkd_value[31:0];
 
+wire [3:0] final_mem_we;
+assign final_mem_we = inst_st_w ? 4'b1111 : 
+                      inst_st_h ? (mem_we << alu_result[1:0]) :
+                      inst_st_b ? (mem_we << alu_result[1:0]) : 4'b0000;
 
-assign data_sram_we    = es_valid ? mem_we : 4'b0;
+assign data_sram_we    = es_valid ? (final_mem_we) : 4'b0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data;

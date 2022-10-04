@@ -390,7 +390,7 @@ assign src2_hazard = (rf_raddr2 == 5'b0) ? 1'b0:
 
 assign either_hazard = src1_hazard || src2_hazard;
 assign both_src = inst_add_w || inst_sub_w || inst_slt || inst_nor || inst_and || inst_or || inst_xor || inst_beq || inst_bne || inst_sltu || inst_sll_w || inst_srl_w || inst_sra_w || inst_mul_w || inst_mulh_w || inst_mulh_wu || inst_div_w || inst_mod_w || inst_div_wu || inst_mod_wu;
-assign src1 = inst_slli_w || inst_srli_w || inst_srai_w || inst_addi_w || inst_jirl || inst_slti || inst_sltui || inst_andi || inst_ori || inst_xori;
+assign src1 = inst_slli_w || inst_srli_w || inst_srai_w || inst_addi_w || inst_jirl || inst_slti || inst_sltui || inst_andi || inst_ori || inst_xori || inst_ld_b || inst_ld_bu || inst_ld_h || inst_ld_hu || inst_ld_w;
 assign src2 = inst_st_w | inst_st_b | inst_st_h;
 
 assign hazard      = (both_src && either_hazard) ? 1'b1:
