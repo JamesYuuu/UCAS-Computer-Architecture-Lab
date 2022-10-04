@@ -185,7 +185,7 @@ assign write_result = (is_mul) ? mul_result :
 assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op}=ds_to_es_bus_r;
 assign es_to_ms_bus = {res_from_mem,gr_we,dest,write_result,pc};
 
-assign data_sram_we    = mem_we && es_valid? 4'hF : 4'h0;
+assign data_sram_we    = es_valid ? mem_we : 4'b0;//mem_we && es_valid? 4'hF : 4'h0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = rkd_value;
