@@ -18,8 +18,7 @@ module csr(
     input   [31:0]     csr_save3_data,
     input   [31:0]     coreid_in,
     input              ertn_flush,
-    input   [7:0]      hw_int_in,
-    input              ipi_int_in
+    input   [7:0]      hw_int_in
 );
 
 // translate csr_num to csr;
@@ -68,7 +67,9 @@ assign is_ale  = (wb_ecode == 1'h9);
 assign is_brk  = (wb_ecode == 1'hc);
 assign is_ine  = (wb_ecode == 1'hd);
 
-// notice that csr_{reg_name}_reserve is read-only and always return 0;
+// note that csr_{reg_name}_reserve is read-only and always return 0;
+// note that we don't consider some domains in csr_crmd and csr_prmd;
+
 // basic csr_regs;
 // csr_crmd;
 reg  [1:0]   csr_crmd_plv;
@@ -205,7 +206,9 @@ always @(posedge clk) begin
     else if (csr_we && is_csr_ticlr && csr_wmask[0] && csr_wvalue[0])
         csr_estat_is[11] <= 1'b1;
     
-    csr_estat_is[12] <= ipi_int_in;
+    // note that we don't consider Inter-Processor Interrupt here;
+    // csr_estat_is[12] <= ipi_int_in;
+    csr_estat_is[12] <= 1'b0;
 end
 
 // control csr_estat_ecode and csr_estat_esubcode;
