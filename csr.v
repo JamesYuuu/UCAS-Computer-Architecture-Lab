@@ -1,22 +1,25 @@
 module csr(
-    input              reset;
-    input              clk;
-    input              csr_re;
-    input              csr_num;
-    output  [31:0]     csr_rvalue;
-    input              csr_we;
-    input   [31:0]     csr_wmask;
-    input   [31:0]     csr_wvalue;
-    input              wb_ecode;
-    input              wb_esubcode;
-    input              wb_ex;
-    input   [31:0]     wb_pc;
-    input   [31:0]     wb_vaddr;
-    input   [31:0]     csr_save0_data;
-    input   [31:0]     csr_save1_data;
-    input   [31:0]     csr_save2_data;
-    input   [31:0]     csr_save3_data;
-    input   [31:0]     coreid_in;
+    input              reset,
+    input              clk,
+    input              csr_re,
+    input   [13:0]     csr_num,
+    output  [31:0]     csr_rvalue,
+    input              csr_we,
+    input   [31:0]     csr_wmask,
+    input   [31:0]     csr_wvalue,
+    input              wb_ecode,
+    input              wb_esubcode,
+    input              wb_ex,
+    input   [31:0]     wb_pc,
+    input   [31:0]     wb_vaddr,
+    input   [31:0]     csr_save0_data,
+    input   [31:0]     csr_save1_data,
+    input   [31:0]     csr_save2_data,
+    input   [31:0]     csr_save3_data,
+    input   [31:0]     coreid_in,
+    input              ertn_flush,
+    input   [7:0]      hw_int_in,
+    input              ipi_int_in
 );
 
 // translate csr_num to csr;
@@ -37,22 +40,22 @@ wire  is_csr_tcfg;
 wire  is_csr_tval;
 wire  is_csr_ticlr;
 
-assign is_csr_crmd   = (csr_num == 1'h0);
-assign is_csr_prmd   = (csr_num == 1'h1);
-assign is_csr_ecfg   = (csr_num == 1'h4);
-assign is_csr_estat  = (csr_num == 1'h5);
-assign is_csr_era    = (csr_num == 1'h6);
-assign is_csr_badv   = (csr_num == 1'h7);
-assign is_csr_eentry = (csr_num == 1'hc);
-assign is_csr_save0  = (csr_num == 2'h30);
-assign is_csr_save1  = (csr_num == 2'h31);
-assign is_csr_save2  = (csr_num == 2'h32);
-assign is_csr_save3  = (csr_num == 2'h33);
-assign is_csr_llbctl = (csr_num == 2'h60);
-assign is_csr_tid    = (csr_num == 2'h40);
-assign is_csr_tcfg   = (csr_num == 2'h41);
-assign is_csr_tval   = (csr_num == 2'h42);
-assign is_csr_ticlr  = (csr_num == 2'h44);
+assign is_csr_crmd   = (csr_num == 14'h0);
+assign is_csr_prmd   = (csr_num == 14'h1);
+assign is_csr_ecfg   = (csr_num == 14'h4);
+assign is_csr_estat  = (csr_num == 14'h5);
+assign is_csr_era    = (csr_num == 14'h6);
+assign is_csr_badv   = (csr_num == 14'h7);
+assign is_csr_eentry = (csr_num == 14'hc);
+assign is_csr_save0  = (csr_num == 14'h30);
+assign is_csr_save1  = (csr_num == 14'h31);
+assign is_csr_save2  = (csr_num == 14'h32);
+assign is_csr_save3  = (csr_num == 14'h33);
+assign is_csr_llbctl = (csr_num == 14'h60);
+assign is_csr_tid    = (csr_num == 14'h40);
+assign is_csr_tcfg   = (csr_num == 14'h41);
+assign is_csr_tval   = (csr_num == 14'h42);
+assign is_csr_ticlr  = (csr_num == 14'h44);
 
 // translate ecode and esubcode;
 wire  is_adef;
@@ -138,7 +141,7 @@ wire  [31:0]  tcfg_next_value;
 reg   [31:0]  timer_cnt;
 
 // csr_ticlr;
-reg          csr_ticlr_clr;   // write-1-only ; ignore write-0 ;
+wire         csr_ticlr_clr;   // write-1-only ; ignore write-0 ;
 wire [31:0]  csr_ticlr;
 assign csr_ticlr = {31'b0, csr_ticlr_clr};
 
@@ -167,8 +170,8 @@ end
 // control csr_prmd_pplv and csr_prmd_pie;
 always @(posedge clk) begin
     if (wb_ex) begin
-        csr_prmd_pplv <= csr_prmd_plv;
-        csr_prmd_pie  <= csr_prmd_ie;
+        csr_prmd_pplv <= csr_crmd_plv;
+        csr_prmd_pie  <= csr_crmd_ie;
     end
     else if (csr_we && is_csr_prmd) begin
         csr_prmd_pplv <= csr_wmask[1:0] & csr_wvalue[1:0]
@@ -206,7 +209,7 @@ always @(posedge clk) begin
 end
 
 // control csr_estat_ecode and csr_estat_esubcode;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (wb_ex) begin
         csr_estat_ecode <= wb_ecode;
         csr_estat_esubcode <= wb_esubcode;
@@ -214,7 +217,7 @@ always @posedge(clk) begin
 end
 
 // control csr_era;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (wb_ex)
         csr_era <= wb_pc;
     else if (csr_we && is_csr_era)
@@ -224,20 +227,20 @@ end
 
 // control csr_badv_vaddr
 assign wb_ex_addr_err = is_adef || is_ale;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (wb_ex_addr_err && wb_ex)
         csr_badv <= is_adef ? wb_pc : wb_vaddr;
 end
 
 // control csr_eentry_va;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (csr_we && is_csr_eentry)
         csr_eentry_va <= csr_wmask[31:6] & csr_wvalue[31:6]
                       | ~csr_wmask[31:6] & csr_eentry_va;
 end
 
 // control csr_save0_3;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (csr_we && is_csr_save0)
         csr_save0 <= csr_wmask[31:0] & csr_wvalue[31:0]
                   | ~csr_wmask[31:0] & csr_save0_data;
@@ -253,7 +256,7 @@ always @posedge(clk) begin
 end
 
 // control csr_tid
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (reset)
         csr_tid = coreid_in;
     else if (csr_we && is_csr_tid)
@@ -262,7 +265,7 @@ always @posedge(clk) begin
 end
 
 // control csr_tcfg_en and csr_tcfg_periodic and csr_tcfg_initval;
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (reset)
         csr_tcfg_en <= 1'b0;
     else if (csr_we && is_csr_tcfg)
@@ -281,9 +284,9 @@ end
 assign tcfg_next_value = csr_wmask[31:0] & csr_wvalue[31:0]
                       | ~csr_wmask[31:0] & csr_tcfg;
 
-always @posedge(clk) begin
+always @(posedge clk) begin
     if (reset)
-        csr_tval_timeval <= 32'hffffffff;
+        timer_cnt <= 32'hffffffff;
     else if (csr_we && is_csr_tcfg && tcfg_next_value[0])
         timer_cnt <= {tcfg_next_value[31:2],2'b0};
     else if (csr_tcfg_en && timer_cnt!=32'hffffffff) begin
@@ -299,20 +302,20 @@ assign csr_tval = timer_cnt;
 // control csr_ticlr_clr
 assign csr_ticlr_clr = 1'b0;
 
-assign csr_rvalue = {32{is_csr_crmd} & csr_crmd}
-                  | {32{is_csr_prmd} & csr_prmd}
-                  | {32{is_csr_estat} & csr_estat}  
-                  | {32{is_csr_era} & csr_era}
-                  | {32{is_csr_badv} & csr_badv}
-                  | {32{is_csr_eentry} & csr_eentry}
-                  | {32{is_csr_save0} & csr_save0}
-                  | {32{is_csr_save1} & csr_save1}
-                  | {32{is_csr_save2} & csr_save2}
-                  | {32{is_csr_save3} & csr_save3}
-                  | {32{is_csr_llbctl} & csr_llbctl}
-                  | {32{is_csr_tid} & csr_tid}
-                  | {32{is_csr_tcfg} & csr_tcfg}
-                  | {32{is_csr_tval} & csr_tval}
-                  | {32{is_csr_ticlr} & csr_ticlr_clr};
+assign csr_rvalue = ({32{is_csr_crmd}} & csr_crmd)
+                  | ({32{is_csr_prmd}} & csr_prmd)
+                  | ({32{is_csr_estat}} & csr_estat)
+                  | ({32{is_csr_era}} & csr_era)
+                  | ({32{is_csr_badv}} & csr_badv)
+                  | ({32{is_csr_eentry}} & csr_eentry)
+                  | ({32{is_csr_save0}} & csr_save0)
+                  | ({32{is_csr_save1}} & csr_save1)
+                  | ({32{is_csr_save2}} & csr_save2)
+                  | ({32{is_csr_save3}} & csr_save3)
+                  | ({32{is_csr_llbctl}} & csr_llbctl)
+                  | ({32{is_csr_tid}} & csr_tid)
+                  | ({32{is_csr_tcfg}} & csr_tcfg)
+                  | ({32{is_csr_tval}} & csr_tval)
+                  | ({32{is_csr_ticlr}} & csr_ticlr_clr);
 
 endmodule
