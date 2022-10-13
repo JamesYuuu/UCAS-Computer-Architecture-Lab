@@ -9,7 +9,7 @@ module EXE_stage(
     input   [201:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [109:0]     es_to_ms_bus,
+    output  [173:0]     es_to_ms_bus,
     // data sram interface
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
@@ -196,7 +196,7 @@ assign write_result = (is_mul) ? mul_result :
 // deal with input and output
 wire [33:0] csr_data;
 assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign es_to_ms_bus = {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 // add support for sd
 // code by JamesYu

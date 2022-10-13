@@ -5,7 +5,7 @@ module WB_stage(
     output              ws_allowin,
     // input from EXE stage
     input               ms_to_ws_valid,
-    input   [103:0]     ms_to_ws_bus,
+    input   [167:0]     ms_to_ws_bus,
     // output for reg_file
     output  [38:0]      rf_bus,
     // trace debug interface
@@ -29,7 +29,7 @@ wire [31:0] rf_wdata;
 
 reg          ws_valid;
 wire         ws_ready_go;
-reg  [103:0] ms_to_ws_bus_r;
+reg  [167:0] ms_to_ws_bus_r;
 
 wire [33:0]  csr_data;
 wire [4:0]   csr_op;
@@ -40,6 +40,9 @@ wire         inst_csrwr;
 wire         inst_csrxchg;
 wire         inst_ertn;
 wire         inst_syscall;
+
+wire [31:0]  rj_value;
+wire [31:0]  rkd_value;
 
 assign  {csr_op,csr_num,csr_code}=csr_data;
 assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall}=csr_op;
@@ -66,7 +69,7 @@ always @(posedge clk) begin
 end
 
 //deal with input and output
-assign {csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
+assign {rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
 assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
 assign wb_ex = inst_syscall & ws_valid;
