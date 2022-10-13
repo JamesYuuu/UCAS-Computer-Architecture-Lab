@@ -14,7 +14,8 @@ module WB_stage(
     output [ 4:0]       debug_wb_rf_wnum,
     output [31:0]       debug_wb_rf_wdata,
     // interrupt signal
-    output              wb_ex
+    output              wb_ex,
+    output [31:0]       csr_eentry
 );
 
 wire        gr_we;
@@ -72,7 +73,6 @@ assign wb_ex = inst_syscall & ws_valid;
 
 wire csr_re;
 wire [31:0] csr_rvalue;
-wire [31:0] csr_eentry;
 wire csr_we;
 wire [31:0] csr_wmask;
 wire [31:0] csr_wvalue;
