@@ -6,10 +6,10 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [109:0]    es_to_ms_bus,
+    input   wire [173:0]    es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
-    output  wire [103:0]    ms_to_ws_bus,
+    output  wire [167:0]    ms_to_ws_bus,
     // data sram interface
     input   wire [31:0]     data_sram_rdata,
     // output ms_valid and ms_to_ds_bus to ID stage
@@ -29,7 +29,7 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg  [109:0] es_to_ms_bus_r;
+reg [173:0] es_to_ms_bus_r;
 
 // add ld op
 wire [4:0] ld_op;
@@ -60,8 +60,10 @@ always @(posedge clk) begin
 end
 // deal with input and output
 wire [33:0] csr_data;
-assign {ld_op,res_from_mem,gr_we,dest,alu_result,pc,csr_data}=es_to_ms_bus_r;
-assign ms_to_ws_bus={csr_data,gr_we,dest,final_result,pc};
+wire [31:0] rj_value;
+wire [31:0] rkd_value;
+assign {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
+assign ms_to_ws_bus={rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
 //bobbbbbbbbbby add below
 wire [31:0] ld_b_result;

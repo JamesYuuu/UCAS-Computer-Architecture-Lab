@@ -16,7 +16,7 @@ module IF_stage(
     input   [31:0]  inst_sram_rdata,
     // interrupt signal
     input           wb_ex,
-    input           csr_eentry
+    input   [31:0]  csr_eentry
 );
 
 reg         fs_valid;

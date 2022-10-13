@@ -17,8 +17,8 @@ module ID_stage(
     // input for hazard
     input           out_ms_valid,
     input           out_es_valid,
-    input   [103:0] ms_to_ws_bus,
-    input   [109:0] es_to_ms_bus,
+    input   [167:0] ms_to_ws_bus,
+    input   [173:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex
 );
