@@ -72,6 +72,7 @@ assign wb_ex = inst_syscall & ws_valid;
 
 wire csr_re;
 wire [31:0] csr_rvalue;
+wire [31:0] csr_eentry;
 wire csr_we;
 wire [31:0] csr_wmask;
 wire [31:0] csr_wvalue;
@@ -107,6 +108,7 @@ csr my_csr(
     .csr_re(csr_re),
     .csr_num(csr_num),
     .csr_rvalue(csr_rvalue),
+    .csr_eentry(csr_eentry),
     .csr_we(csr_we),
     .csr_wmask(csr_wmask),
     .csr_wvalue(csr_wvalue),
