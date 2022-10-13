@@ -318,9 +318,6 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
-// assign rj_value  = rf_rdata1;
-// assign rkd_value = rf_rdata2;
-
 assign rj_eq_rd      = (rj_value == rkd_value);
 assign rj_above_rd   = ($signed(rj_value) >= $signed(rkd_value));
 assign rj_above_rd_u = (rj_value >= rkd_value);
