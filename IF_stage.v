@@ -9,11 +9,13 @@ module IF_stage(
     output          fs_to_ds_valid,
     output  [63:0]  fs_to_ds_bus,
     // inst sram interface
-    output wire        inst_sram_en,
-    output wire [3:0]  inst_sram_we,
-    output wire [31:0] inst_sram_addr,
-    output wire [31:0] inst_sram_wdata,
-    input  wire [31:0] inst_sram_rdata
+    output          inst_sram_en,
+    output  [3:0]   inst_sram_we,
+    output  [31:0]  inst_sram_addr,
+    output  [31:0]  inst_sram_wdata,
+    input   [31:0]  inst_sram_rdata,
+    // interrupt signal
+    input           wb_ex
 );
 
 reg         fs_valid;

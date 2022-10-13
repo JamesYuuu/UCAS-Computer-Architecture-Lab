@@ -9,7 +9,7 @@ module ID_stage(
     input   [63:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [167:0] ds_to_es_bus,
+    output  [201:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -17,8 +17,10 @@ module ID_stage(
     // input for hazard
     input           out_ms_valid,
     input           out_es_valid,
-    input   [69:0]  ms_to_ws_bus,
-    input   [75:0]  es_to_ms_bus
+    input   [103:0] ms_to_ws_bus,
+    input   [109:0] es_to_ms_bus,
+    // interrupt signal
+    input           wb_ex
 );
 
 reg         ds_valid;
@@ -240,17 +242,22 @@ wire inst_csrwr;        // from grf to csr
 wire inst_csrxchg;      // rj is a mask, rd with mask write to csr
 wire inst_ertn;
 wire inst_syscall;
-wire [14:0] code;
+wire [14:0] csr_code;
 wire [13:0] csr_num;
 
 assign inst_syscall = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b10110];
-assign code = ds_inst[14:0];
+assign csr_code = ds_inst[14:0];
 
 assign inst_csrrd = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst[9:5] == 5'b00000);
 assign inst_csrwr = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst[9:5] == 5'b00001);
 assign inst_csrxchg = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (~inst_csrrd) & (~inst_csrwr);
 assign inst_ertn = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01110) & (ds_inst[9:0] == 0);
 assign csr_num = ds_inst[23:10];
+
+wire  [4:0]   csr_op;
+wire  [33:0]  csr_data;
+assign csr_op   = {inst_csrrd, inst_csrwr, inst_csrxchg, inst_ertn, inst_syscall};
+assign csr_data = {csr_op,csr_num,csr_code};
 
 //bobbbbbbbbbby add above
 
@@ -365,7 +372,7 @@ wire [7:0] ldst_op;
 assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div_w,inst_mod_w,inst_div_wu,inst_mod_wu};
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 
-assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op};
+assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
 
 assign ds_ready_go      = !(hazard && es_res_from_mem && es_valid);
 assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;

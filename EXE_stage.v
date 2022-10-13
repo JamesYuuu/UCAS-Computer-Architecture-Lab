@@ -6,17 +6,19 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [167:0]     ds_to_es_bus,
+    input   [201:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [75:0]      es_to_ms_bus,
+    output  [109:0]     es_to_ms_bus,
     // data sram interface
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
     output wire [31:0]  data_sram_addr,
     output wire [31:0]  data_sram_wdata,
     // output es_valid and bus for ID stage
-    output              out_es_valid
+    output              out_es_valid,
+    // interrupt signal
+    input               wb_ex
 );
 
 wire [11:0] alu_op;
@@ -34,7 +36,7 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
-reg [167:0] ds_to_es_bus_r;
+reg [201:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -189,8 +191,9 @@ assign write_result = (is_mul) ? mul_result :
                       (is_div) ? div_result :   alu_result;
 
 // deal with input and output
-assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op}=ds_to_es_bus_r;
-assign es_to_ms_bus = {ld_op,res_from_mem,gr_we,dest,write_result,pc};
+wire [33:0] csr_data;
+assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 // add support for sd
 // code by JamesYu
