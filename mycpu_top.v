@@ -40,6 +40,7 @@ wire [33:0]  br_bus;
 wire         out_ms_valid;
 wire         out_es_valid;
 wire         wb_ex;
+wire         mem_ex;
 wire         wb_ertn;
 wire [31:0]  csr_eentry;
 wire [31:0]  csr_era;
@@ -115,7 +116,8 @@ EXE_stage EXE_stage(
     .out_es_valid   (out_es_valid   ),
     // interrupt signal
     .wb_ex          (wb_ex          ),
-    .wb_ertn        (wb_ertn        )  
+    .wb_ertn        (wb_ertn        ),
+    .mem_ex         (mem_ex         )  
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -136,7 +138,8 @@ MEM_stage MEM_stage(
     .out_ms_valid   (out_ms_valid   ),
     // interrupt signal
     .wb_ex          (wb_ex          ),
-    .wb_ertn        (wb_ertn        )
+    .wb_ertn        (wb_ertn        ),
+    .mem_ex         (mem_ex         )
 );
 // WB stage
 WB_stage WB_stage(

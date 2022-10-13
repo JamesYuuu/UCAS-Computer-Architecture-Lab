@@ -19,6 +19,7 @@ module EXE_stage(
     output              out_es_valid,
     // interrupt signal
     input               wb_ex,
+    input               mem_ex,
     input               wb_ertn
 );
 
@@ -51,6 +52,9 @@ alu u_alu(
 
 reg     es_valid;
 wire    es_ready_go;
+
+wire       after_ex;
+assign     after_ex = mem_ex | wb_ex;
 
 // code by JamesYu
 // add control signals
@@ -212,7 +216,8 @@ assign final_mem_we = inst_st_w ? 4'b1111 :
                       inst_st_h ? (mem_we << alu_result[1:0]) :
                       inst_st_b ? (mem_we << alu_result[1:0]) : 4'b0000;
 
-assign data_sram_we    = es_valid ? (final_mem_we) : 4'b0;
+assign data_sram_we    = after_ex ? 4'b0 :
+                         es_valid ? (final_mem_we) : 4'b0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data;

@@ -15,6 +15,7 @@ module MEM_stage(
     // output ms_valid and ms_to_ds_bus to ID stage
     output                  out_ms_valid,
     // interrupt signal
+    output                  mem_ex,
     input                   wb_ex,
     input                   wb_ertn
 );
@@ -65,6 +66,8 @@ wire [31:0] rj_value;
 wire [31:0] rkd_value;
 assign {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
+
+assign mem_ex = csr_data[29];
 
 //bobbbbbbbbbby add below
 wire [31:0] ld_b_result;
