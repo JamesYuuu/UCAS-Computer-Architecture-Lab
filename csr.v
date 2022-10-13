@@ -4,11 +4,12 @@ module csr(
     input              csr_re,
     input   [13:0]     csr_num,
     output  [31:0]     csr_rvalue,
+    output  [31:0]     csr_eentry,
     input              csr_we,
     input   [31:0]     csr_wmask,
     input   [31:0]     csr_wvalue,
-    input              wb_ecode,
-    input              wb_esubcode,
+    input   [5:0]      wb_ecode,
+    input   [8:0]      wb_esubcode,
     input              wb_ex,
     input   [31:0]     wb_pc,
     input   [31:0]     wb_vaddr,
@@ -62,10 +63,10 @@ wire  is_ale;
 wire  is_brk;
 wire  is_ine;
 
-assign is_adef = (wb_ecode == 1'h8 && wb_esubcode == 1'h0);
-assign is_ale  = (wb_ecode == 1'h9);
-assign is_brk  = (wb_ecode == 1'hc);
-assign is_ine  = (wb_ecode == 1'hd);
+assign is_adef = (wb_ecode == 6'h8 && wb_esubcode == 9'h0);
+assign is_ale  = (wb_ecode == 6'h9);
+assign is_brk  = (wb_ecode == 6'hc);
+assign is_ine  = (wb_ecode == 6'hd);
 
 // note that csr_{reg_name}_reserve is read-only and always return 0;
 // note that we don't consider some domains in csr_crmd and csr_prmd;
@@ -109,7 +110,6 @@ reg  [31:0]  csr_badv;
 
 // csr_eentry;
 reg  [25:0]  csr_eentry_va;
-wire [31:0]  csr_eentry;
 assign csr_eentry = {csr_eentry_va, 6'b0};
 
 // csr_save0_3;
