@@ -4,6 +4,7 @@ module csr(
     input              csr_re,
     input   [13:0]     csr_num,
     output  [31:0]     csr_rvalue,
+    output  [31:0]     csr_eentry,
     input              csr_we,
     input   [31:0]     csr_wmask,
     input   [31:0]     csr_wvalue,
@@ -109,7 +110,6 @@ reg  [31:0]  csr_badv;
 
 // csr_eentry;
 reg  [25:0]  csr_eentry_va;
-wire [31:0]  csr_eentry;
 assign csr_eentry = {csr_eentry_va, 6'b0};
 
 // csr_save0_3;
