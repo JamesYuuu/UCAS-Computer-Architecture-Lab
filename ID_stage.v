@@ -123,9 +123,9 @@ wire [31:0] ms_result;
 
 // code by JamesYu;
 // add csr hazard;
-wire        csr_hazard;
-wire        common_csr;
-wire        special_csr;
+// wire        csr_hazard;
+// wire        common_csr;
+// wire        special_csr;
 
 wire        es_inst_csrrd;
 wire        es_inst_csrwr;
@@ -398,7 +398,8 @@ assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,in
 
 assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
 
-assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
+// assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
+assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));
 assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
@@ -456,9 +457,9 @@ assign      {ms_inst_csrrd,ms_inst_csrwr,ms_inst_csrxchg,ms_inst_syscall,ms_inst
 assign      es_csr = es_inst_csrwr || es_inst_csrxchg || es_inst_csrrd;
 assign      ms_csr = ms_inst_csrwr || ms_inst_csrxchg || ms_inst_csrrd;
 
-assign      common_csr = (es_csr || ms_csr) && (inst_csrrd || inst_csrwr || inst_csrxchg) && (es_csrnum == csr_num || ms_csrnum == csr_num);
-assign      special_csr = ((es_inst_csrwr || es_inst_csrxchg || ms_inst_csrwr || ms_inst_csrxchg) && (inst_syscall || inst_ertn)) || ((es_inst_ertn || ms_inst_ertn) && inst_syscall);
-assign      csr_hazard = common_csr || special_csr;
+// assign      common_csr = (es_csr || ms_csr) && (inst_csrrd || inst_csrwr || inst_csrxchg) && (es_csrnum == csr_num || ms_csrnum == csr_num);
+// assign      special_csr = ((es_inst_csrwr || es_inst_csrxchg || ms_inst_csrwr || ms_inst_csrxchg) && (inst_syscall || inst_ertn)) || ((es_inst_ertn || ms_inst_ertn) && inst_syscall);
+// assign      csr_hazard = common_csr || special_csr;
 
 // data forward
 assign rj_value  = (rf_raddr1 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
