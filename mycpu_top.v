@@ -40,6 +40,7 @@ wire [33:0]  br_bus;
 wire         out_ms_valid;
 wire         out_es_valid;
 wire         wb_ex;
+wire [31:0]  csr_eentry;
 
 // IF stage
 IF_stage IF_stage(
@@ -59,7 +60,8 @@ IF_stage IF_stage(
     .inst_sram_wdata(inst_sram_wdata),
     .inst_sram_rdata(inst_sram_rdata),
     // interrupt signal
-    .wb_ex          (wb_ex          )
+    .wb_ex          (wb_ex          ),
+    .csr_eentry     (csr_eentry)
 );
 // ID stage
 ID_stage ID_stage(
@@ -146,7 +148,8 @@ WB_stage WB_stage(
     .debug_wb_rf_wnum (debug_wb_rf_wnum ),
     .debug_wb_rf_wdata(debug_wb_rf_wdata),
     // interrupt signal
-    .wb_ex          (wb_ex          )
+    .wb_ex          (wb_ex          ),
+    .csr_eentry     (csr_eentry     )
 );
 
 endmodule
