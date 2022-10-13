@@ -130,7 +130,7 @@ csr my_csr(
     .wb_ecode(wb_ecode),
     .wb_esubcode(wb_esubcode),
     .wb_ex(wb_ex),
-    .wb_pc(wb_pc),
+    .wb_pc(pc),
     .wb_vaddr(wb_vaddr),
     .csr_save0_data(csr_save0_data),
     .csr_save1_data(csr_save1_data),
