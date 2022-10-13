@@ -241,7 +241,7 @@ wire inst_csrxchg;      // rj is a mask, rd with mask write to csr
 wire inst_ertn;
 wire inst_syscall;
 wire [14:0] code;
-wire [13:0] csr;
+wire [13:0] csr_num;
 
 assign inst_syscall = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b10110];
 assign code = ds_inst[14:0];
@@ -250,7 +250,7 @@ assign inst_csrrd = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst
 assign inst_csrwr = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst[9:5] == 5'b00001);
 assign inst_csrxchg = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (~inst_csrrd) & (~inst_csrwr);
 assign inst_ertn = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01110) & (ds_inst[9:0] == 0);
-assign csr = ds_inst[23:10];
+assign csr_num = ds_inst[23:10];
 
 //bobbbbbbbbbby add above
 
