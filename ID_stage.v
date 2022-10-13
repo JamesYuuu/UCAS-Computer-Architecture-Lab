@@ -462,11 +462,13 @@ assign      ms_csr = ms_inst_csrwr || ms_inst_csrxchg || ms_inst_csrrd;
 // assign      csr_hazard = common_csr || special_csr;
 
 // data forward
-assign rj_value  = (rf_raddr1 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
+assign rj_value  = (rf_raddr1 == 5'b0) ? 32'b0:
+                   (rf_raddr1 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
                    (rf_raddr1 == ms_addr && ms_we && out_ms_valid)? ms_result:
-                   (rf_raddr1 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata1;
+                   (rf_raddr1 == rf_waddr && rf_we && ws_valid)? rf_wdata : rf_rdata1;
 
-assign rkd_value = (rf_raddr2 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
+assign rkd_value = (rf_raddr2 == 5'b0) ? 32'b0:
+                   (rf_raddr2 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
                    (rf_raddr2 == ms_addr && ms_we && out_ms_valid)? ms_result:
                    (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
 
