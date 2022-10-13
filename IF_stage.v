@@ -16,7 +16,9 @@ module IF_stage(
     input   [31:0]  inst_sram_rdata,
     // interrupt signal
     input           wb_ex,
-    input   [31:0]  csr_eentry
+    input           wb_ertn,
+    input   [31:0]  csr_eentry,
+    input   [31:0]  csr_era
 );
 
 reg         fs_valid;
@@ -41,6 +43,7 @@ assign fs_to_ds_bus = {fs_inst,fs_pc};
 // pre-IF stage
 assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       =   wb_ex       ? csr_eentry :
+                        wb_ertn     ? csr_era   :
                         br_taken    ? br_target : seq_pc;
 
 // IF stage

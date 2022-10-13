@@ -18,7 +18,8 @@ module EXE_stage(
     // output es_valid and bus for ID stage
     output              out_es_valid,
     // interrupt signal
-    input               wb_ex
+    input               wb_ex,
+    input               wb_ertn
 );
 
 wire [11:0] alu_op;
@@ -173,7 +174,7 @@ always @(posedge clk) begin
     if (reset) begin
         es_valid <= 1'b0;
     end
-    else if(wb_ex) begin
+    else if(wb_ex | wb_ertn) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin
