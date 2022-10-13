@@ -15,7 +15,8 @@ module MEM_stage(
     // output ms_valid and ms_to_ds_bus to ID stage
     output                  out_ms_valid,
     // interrupt signal
-    input                   wb_ex
+    input                   wb_ex,
+    input                   wb_ertn
 );
 
 wire        gr_we;
@@ -48,7 +49,7 @@ always @(posedge clk) begin
     if (reset) begin
         ms_valid <= 1'b0;
     end
-    else if(wb_ex) begin
+    else if(wb_ex || wb_ertn) begin
         ms_valid <= 1'b0;
     end
     else if (ms_allowin) begin

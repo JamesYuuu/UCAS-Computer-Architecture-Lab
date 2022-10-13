@@ -20,7 +20,8 @@ module ID_stage(
     input   [167:0] ms_to_ws_bus,
     input   [173:0] es_to_ms_bus,
     // interrupt signal
-    input           wb_ex
+    input           wb_ex,
+    input           wb_ertn
 );
 
 reg         ds_valid;
@@ -298,7 +299,7 @@ assign br_offs = need_si26 ? {{4{i26[25]}}, i26[25:0], 2'b0} :
 
 assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
-assign src_reg_is_rd = br_con | inst_st_w | inst_st_h | inst_st_b | inst_csrwr; 
+assign src_reg_is_rd = br_con | inst_st_w | inst_st_h | inst_st_b | inst_csrwr | inst_csrxchg; 
 
 assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
@@ -326,7 +327,7 @@ assign src2_is_imm   = inst_slli_w |
 
 assign res_from_mem  = inst_ld_w | inst_ld_b | inst_ld_h | inst_ld_bu | inst_ld_hu;
 assign dst_is_r1     = inst_bl;
-assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h;
+assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h & ~inst_syscall & ~inst_ertn;
 assign mem_we        =  inst_st_w ? 4'b1111 : 
                         inst_st_h ? 4'b0011 :
                         inst_st_b ? 4'b0001 : 4'b0000;
@@ -382,7 +383,7 @@ always @(posedge clk) begin
     if (reset) begin
         ds_valid <=1'b0;
     end
-    else if(wb_ex) begin
+    else if(wb_ex | wb_ertn) begin
         ds_valid <= 1'b0;
     end
     else if (br_taken_cancel) begin

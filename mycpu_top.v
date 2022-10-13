@@ -40,7 +40,9 @@ wire [33:0]  br_bus;
 wire         out_ms_valid;
 wire         out_es_valid;
 wire         wb_ex;
+wire         wb_ertn;
 wire [31:0]  csr_eentry;
+wire [31:0]  csr_era;
 
 // IF stage
 IF_stage IF_stage(
@@ -61,7 +63,9 @@ IF_stage IF_stage(
     .inst_sram_rdata(inst_sram_rdata),
     // interrupt signal
     .wb_ex          (wb_ex          ),
-    .csr_eentry     (csr_eentry)
+    .wb_ertn        (wb_ertn        ),
+    .csr_era        (csr_era        ),
+    .csr_eentry     (csr_eentry     )
 );
 // ID stage
 ID_stage ID_stage(
@@ -86,7 +90,8 @@ ID_stage ID_stage(
     .ms_to_ws_bus   (ms_to_ws_bus   ),
     .es_to_ms_bus   (es_to_ms_bus   ),
     // interrupt signal
-    .wb_ex          (wb_ex          )
+    .wb_ex          (wb_ex          ),
+    .wb_ertn        (wb_ertn        )
 );
 // EXE stage
 EXE_stage EXE_stage(
@@ -109,7 +114,8 @@ EXE_stage EXE_stage(
     // output es_to_ds_bus to ID stage
     .out_es_valid   (out_es_valid   ),
     // interrupt signal
-    .wb_ex          (wb_ex          )  
+    .wb_ex          (wb_ex          ),
+    .wb_ertn        (wb_ertn        )  
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -129,7 +135,8 @@ MEM_stage MEM_stage(
     // output ms_to_ds_bus for ID stage
     .out_ms_valid   (out_ms_valid   ),
     // interrupt signal
-    .wb_ex          (wb_ex          )
+    .wb_ex          (wb_ex          ),
+    .wb_ertn        (wb_ertn        )
 );
 // WB stage
 WB_stage WB_stage(
@@ -149,6 +156,8 @@ WB_stage WB_stage(
     .debug_wb_rf_wdata(debug_wb_rf_wdata),
     // interrupt signal
     .wb_ex          (wb_ex          ),
+    .wb_ertn        (wb_ertn        ),
+    .csr_era        (csr_era        ),
     .csr_eentry     (csr_eentry     )
 );
 
