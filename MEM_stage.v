@@ -48,6 +48,9 @@ always @(posedge clk) begin
     if (reset) begin
         ms_valid <= 1'b0;
     end
+    else if(wb_ex) begin
+        ms_valid <= 1'b0;
+    end
     else if (ms_allowin) begin
         ms_valid <= es_to_ms_valid;
     end
