@@ -173,6 +173,9 @@ always @(posedge clk) begin
     if (reset) begin
         es_valid <= 1'b0;
     end
+    else if(wb_ex) begin
+        es_valid <= 1'b0;
+    end
     else if (es_allowin) begin
         es_valid <= ds_to_es_valid;
     end

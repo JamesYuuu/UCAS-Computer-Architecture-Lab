@@ -382,6 +382,9 @@ always @(posedge clk) begin
     if (reset) begin
         ds_valid <=1'b0;
     end
+    else if(wb_ex) begin
+        ds_valid <= 1'b0;
+    end
     else if (br_taken_cancel) begin
         ds_valid <=1'b0;
     end
