@@ -80,7 +80,7 @@ reg  [1:0]   csr_crmd_datf;
 reg  [1:0]   csr_crmd_datm;
 wire [31:0]  csr_crmd;
 // assign csr_crmd = {23'b0 , csr_crmd_datm, csr_crmd_datf, csr_crmd_pg, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
-assign csr_crmd = {29'b0,csr_crmd_ie,csr_crmd_plv};
+assign csr_crmd = {28'b0,csr_crmd_da,csr_crmd_ie,csr_crmd_plv};
 
 // csr_prmd;
 reg  [1:0]   csr_prmd_pplv;
@@ -146,7 +146,7 @@ wire         csr_ticlr_clr;   // write-1-only ; ignore write-0 ;
 wire [31:0]  csr_ticlr;
 assign csr_ticlr = {31'b0, csr_ticlr_clr};
 
-// control csr_crmd_plv and csr_crmd_ie;
+// control csr_crmd_plv and csr_crmd_ie and csr_crmd_da;
 always @(posedge clk) begin
     if (reset)  begin
         csr_crmd_plv <= 2'b0;
@@ -166,6 +166,8 @@ always @(posedge clk) begin
         csr_crmd_ie  <= csr_wmask[2] & csr_wvalue[2]
                      | ~csr_wmask[2] & csr_crmd_ie;
     end
+
+    csr_crmd_da <= 1'b1;
 end
 
 // control csr_prmd_pplv and csr_prmd_pie;
