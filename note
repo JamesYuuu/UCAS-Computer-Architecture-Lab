@@ -1,0 +1,7 @@
+增加vaddr生成逻辑：         ## 需要从EX级后传data_sram_data至data_sram_data_error，直接传就行
+修改mem_ex，wb_ex判断逻辑
+修改wb_ecode生成逻辑
+
+## todo: 实现中断支持：软件 * 2， 硬件 * 8， 定时器中断
+
+## problem：7.4 其他指令的实现，并不在实践任务13中

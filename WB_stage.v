@@ -66,6 +66,7 @@ wire [31:0] csr_save3_data;
 wire [31:0] coreid_in;
 wire ertn_flush;
 wire [7:0] hw_int_in;
+wire [31:0] data_sram_addr_error;
 
 wire [31:0]  rj_value;
 wire [31:0]  rkd_value;
@@ -102,7 +103,7 @@ end
 assign {exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
 assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
-assign wb_ex = inst_syscall & ws_valid;
+assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
 
 assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
@@ -110,9 +111,15 @@ assign csr_we = inst_csrwr | inst_csrxchg;
 assign csr_wmask =  inst_csrwr ? 32'hffffffff :
                     inst_csrxchg ? rj_value : 32'b0;
 assign csr_wvalue = (inst_csrwr | inst_csrxchg) ? rkd_value : 32'b0;
-assign wb_ecode = inst_syscall ? 6'hb : 6'h0;
+assign wb_ecode = inst_syscall  ? 6'hb : 
+                  inst_break    ? 6'hc :
+                  adef_detected ? 6'h8 :
+                  ine_detected  ? 6'hd :
+                  ale_detected  ? 6'h9 :
+                  6'h0;
 assign wb_esubcode = 0;
-assign wb_vaddr = 0;
+assign wb_vaddr =   adef_detected ? pc :
+                    ale_detected  ? data_sram_addr_error : 32'b0;
 assign csr_save0_data = 0;
 assign csr_save1_data = 0;
 assign csr_save2_data = 0;
