@@ -96,11 +96,11 @@ wire [31:0]  csr_ecfg;
 assign csr_ecfg = {19'b0, csr_ecfg_lie};
 
 // csr_estat; 
-reg  [11:0]  csr_estat_is;
+reg  [12:0]  csr_estat_is;
 reg  [5:0]   csr_estat_ecode;
 reg  [8:0]   csr_estat_esubcode;
 wire [31:0]  csr_estat;
-assign csr_estat = {1'b0,csr_estat_esubcode, csr_estat_ecode, 3'b0, csr_estat_is[11:10], 1'b0, csr_estat_is[9:0]};
+assign csr_estat = {1'b0,csr_estat_esubcode, csr_estat_ecode, 3'b0, csr_estat_is[12:11], 1'b0, csr_estat_is[9:0]};
 
 // csr_era;
 reg  [31:0]  csr_era;
@@ -204,9 +204,9 @@ always @(posedge clk) begin
     csr_estat_is[10]  <= 1'b0;
 
     if (timer_cnt[31:0]==32'b0)
-        csr_estat_is[11] <= 1'b0;
-    else if (csr_we && is_csr_ticlr && csr_wmask[0] && csr_wvalue[0])
         csr_estat_is[11] <= 1'b1;
+    else if (csr_we && is_csr_ticlr && csr_wmask[0] && csr_wvalue[0])
+        csr_estat_is[11] <= 1'b0;
     
     // note that we don't consider Inter-Processor Interrupt here;
     // csr_estat_is[12] <= ipi_int_in;

@@ -400,7 +400,7 @@ assign ds_to_es_bus              = {alu_op, src1_is_pc, ds_pc, rj_value, src2_is
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));
-assign ds_allowin       = !ds_valid || ds_ready_go && es_allowin;
+assign ds_allowin       = !ds_valid || wb_ex || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
 always @(posedge clk) begin
