@@ -17,7 +17,8 @@ module WB_stage(
     output              wb_ex,
     output [31:0]       csr_eentry,
     output [31:0]       csr_era,
-    output              wb_ertn
+    output              wb_ertn,
+    input  [31:0]       data_sram_addr_error
 );
 
 wire        gr_we;
@@ -66,7 +67,6 @@ wire [31:0] csr_save3_data;
 wire [31:0] coreid_in;
 wire ertn_flush;
 wire [7:0] hw_int_in;
-wire [31:0] data_sram_addr_error;
 
 wire [31:0]  rj_value;
 wire [31:0]  rkd_value;

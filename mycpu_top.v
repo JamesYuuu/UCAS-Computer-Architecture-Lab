@@ -44,6 +44,7 @@ wire         mem_ex;
 wire         wb_ertn;
 wire [31:0]  csr_eentry;
 wire [31:0]  csr_era;
+wire [31:0]  data_sram_addr_error;
 
 // IF stage
 IF_stage IF_stage(
@@ -117,7 +118,8 @@ EXE_stage EXE_stage(
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
-    .mem_ex         (mem_ex         )  
+    .mem_ex         (mem_ex         ),
+    .data_sram_addr_error(data_sram_addr_error)
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -161,7 +163,8 @@ WB_stage WB_stage(
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .csr_era        (csr_era        ),
-    .csr_eentry     (csr_eentry     )
+    .csr_eentry     (csr_eentry     ),
+    .data_sram_addr_error(data_sram_addr_error)
 );
 
 endmodule

@@ -20,7 +20,8 @@ module EXE_stage(
     // interrupt signal
     input               wb_ex,
     input               mem_ex,
-    input               wb_ertn
+    input               wb_ertn,
+    output [31:0]       data_sram_addr_error
 );
 
 wire ale_detected;
@@ -235,5 +236,7 @@ assign data_sram_wdata = st_data;
 assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] == 2'b00)) ? 1'b1 :
                        ((inst_st_h | inst_ld_h | inst_ld_hu) & (data_sram_addr[0] == 1'b1)) ? 1'b1 : 1'b0;
 assign out_es_valid = es_valid;
+
+assign data_sram_addr_error = alu_result;
 
 endmodule
