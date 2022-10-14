@@ -9,7 +9,7 @@ module ID_stage(
     input   [64:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [204:0] ds_to_es_bus,
+    output  [205:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -17,11 +17,12 @@ module ID_stage(
     // input for hazard
     input           out_ms_valid,
     input           out_es_valid,
-    input   [171:0] ms_to_ws_bus,
-    input   [177:0] es_to_ms_bus,
+    input   [172:0] ms_to_ws_bus,
+    input   [178:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex,
-    input           wb_ertn
+    input           wb_ertn,
+    input           has_int
 );
 
 wire        ine_detected;
@@ -459,7 +460,7 @@ assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 assign next_exception_op         = {prev_exception_op,inst_break,ine_detected};
 
-assign ds_to_es_bus              = {next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
+assign ds_to_es_bus              = {has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));

@@ -6,10 +6,10 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [177:0]    es_to_ms_bus,
+    input   wire [178:0]    es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
-    output  wire [171:0]    ms_to_ws_bus,
+    output  wire [172:0]    ms_to_ws_bus,
     // data sram interface
     input   wire [31:0]     data_sram_rdata,
     // output ms_valid and ms_to_ds_bus to ID stage
@@ -31,7 +31,8 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg [177:0] es_to_ms_bus_r;
+reg [178:0] es_to_ms_bus_r;
+wire        ds_has_int;
 
 // add ld op
 wire [4:0] ld_op;
@@ -65,8 +66,8 @@ wire [33:0] csr_data;
 wire [31:0] rj_value;
 wire [31:0] rkd_value;
 wire [3:0]  exception_op;
-assign {exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
-assign ms_to_ws_bus={exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
+assign {ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
+assign ms_to_ws_bus={ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
 assign mem_ex = csr_data[29] | exception_op[3] | exception_op[2] | exception_op[1] | exception_op[0];       // note that csr_data[29] means inst_syscall
 

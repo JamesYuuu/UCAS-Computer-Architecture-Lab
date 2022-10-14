@@ -5,7 +5,7 @@ module WB_stage(
     output              ws_allowin,
     // input from EXE stage
     input               ms_to_ws_valid,
-    input   [171:0]     ms_to_ws_bus,
+    input   [172:0]     ms_to_ws_bus,
     // output for reg_file
     output  [38:0]      rf_bus,
     // trace debug interface
@@ -18,7 +18,8 @@ module WB_stage(
     output [31:0]       csr_eentry,
     output [31:0]       csr_era,
     output              wb_ertn,
-    input  [31:0]       data_sram_addr_error
+    input  [31:0]       data_sram_addr_error,
+    output              has_int
 );
 
 wire        gr_we;
@@ -32,7 +33,7 @@ wire [31:0] rf_wdata;
 
 reg          ws_valid;
 wire         ws_ready_go;
-reg  [171:0] ms_to_ws_bus_r;
+reg  [172:0] ms_to_ws_bus_r;
 
 wire [33:0]  csr_data;
 wire [4:0]   csr_op;
@@ -44,6 +45,7 @@ wire         inst_csrwr;
 wire         inst_csrxchg;
 wire         inst_ertn;
 wire         inst_syscall;
+wire         ds_has_int;
 
 wire [3:0]   exception_op;
 wire         adef_detected;
@@ -67,7 +69,6 @@ wire [31:0] csr_save3_data;
 wire [31:0] coreid_in;
 wire        ertn_flush;
 wire [7:0]  hw_int_in;
-wire        has_int;
 wire        ipi_int_in;
 
 wire [31:0]  rj_value;
@@ -102,10 +103,10 @@ always @(posedge clk) begin
 end
 
 //deal with input and output
-assign {exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
+assign {ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
 assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
-assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected) & ws_valid;
+assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
 
 assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
