@@ -24,6 +24,8 @@ module ID_stage(
     input           wb_ertn
 );
 
+wire        ine_detected;
+
 reg         ds_valid;
 wire        ds_ready_go;
 reg  [63:0] fs_to_ds_bus_r;
@@ -266,10 +268,13 @@ wire inst_csrwr;        // from grf to csr
 wire inst_csrxchg;      // rj is a mask, rd with mask write to csr
 wire inst_ertn;
 wire inst_syscall;
+wire inst_break;
 wire [14:0] csr_code;
 wire [13:0] csr_num;
 
 assign inst_syscall = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b10110];
+assign inst_break   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b10100];
+
 assign csr_code = ds_inst[14:0];
 
 assign inst_csrrd = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst[9:5] == 5'b00000);
@@ -277,6 +282,61 @@ assign inst_csrwr = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (ds_inst
 assign inst_csrxchg = op_31_26_d[6'b000001] & (ds_inst[25:24] == 2'b00) & (~inst_csrrd) & (~inst_csrwr);
 assign inst_ertn = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01110) & (ds_inst[9:0] == 0);
 assign csr_num = ds_inst[23:10];
+
+assign ine_detected = ~(
+                            inst_add_w  |
+                            inst_sub_w  |
+                            inst_slt    |
+                            inst_sltu   |
+                            inst_nor    |
+                            inst_and    |
+                            inst_or     |
+                            inst_xor    |
+                            inst_slli_w |
+                            inst_srli_w |
+                            inst_srai_w |
+                            inst_addi_w |
+                            inst_ld_w   |
+                            inst_st_w   |
+                            inst_jirl   |
+                            inst_b      |
+                            inst_bl     |
+                            inst_beq    |
+                            inst_bne    |
+                            inst_lu12i_w|
+                            inst_slti   |
+                            inst_sltui  |
+                            inst_andi   |
+                            inst_ori    |
+                            inst_xori   |
+                            inst_sll_w  |
+                            inst_srl_w  |
+                            inst_sra_w  |
+                            inst_mul_w  |
+                            inst_mulh_w |
+                            inst_mulh_wu|
+                            inst_div_w  |
+                            inst_mod_w  |
+                            inst_div_wu |
+                            inst_mod_wu |
+                            inst_blt    |
+                            inst_bge    |
+                            inst_bltu   |
+                            inst_bgeu   |
+                            inst_ld_b   |
+                            inst_ld_h   |
+                            inst_ld_bu  |
+                            inst_ld_hu  |
+                            inst_st_b   |
+                            inst_st_h   |
+                            inst_csrrd  |
+                            inst_csrwr  |
+                            inst_csrxchg|
+                            inst_ertn   |
+                            inst_syscall|
+                            inst_break  |
+                            inst_pcaddu12i
+);
 
 wire  [4:0]   csr_op;
 wire  [33:0]  csr_data;
