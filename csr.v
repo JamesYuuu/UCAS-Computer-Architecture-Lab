@@ -19,7 +19,9 @@ module csr(
     input   [31:0]     csr_save3_data,
     input   [31:0]     coreid_in,
     input              ertn_flush,
-    input   [7:0]      hw_int_in
+    input   [7:0]      hw_int_in,
+    output             has_int,
+    input              ipi_int_in
 );
 
 // translate csr_num to csr;
@@ -215,8 +217,7 @@ always @(posedge clk) begin
         csr_estat_is[11] <= 1'b0;
     
     // note that we don't consider Inter-Processor Interrupt here;
-    // csr_estat_is[12] <= ipi_int_in;
-    csr_estat_is[12] <= 1'b0;
+    csr_estat_is[12] <= ipi_int_in;
 end
 
 // control csr_estat_ecode and csr_estat_esubcode;
@@ -328,5 +329,7 @@ assign csr_rvalue = ({32{is_csr_crmd}} & csr_crmd)
                   | ({32{is_csr_tcfg}} & csr_tcfg)
                   | ({32{is_csr_tval}} & csr_tval)
                   | ({32{is_csr_ticlr}} & csr_ticlr_clr);
+
+assign has_int = ((csr_estat_is[11:0] & csr_ecfg_lie[11:0]) != 12'b0) && (csr_crmd_ie == 1'b1);
 
 endmodule

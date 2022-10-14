@@ -52,9 +52,9 @@ wire         ine_detected;
 wire         ale_detected;
 
 // needed for csr operation
-wire csr_re;
+wire        csr_re;
 wire [31:0] csr_rvalue;
-wire csr_we;
+wire        csr_we;
 wire [31:0] csr_wmask;
 wire [31:0] csr_wvalue;
 wire [5:0]  wb_ecode;
@@ -65,8 +65,10 @@ wire [31:0] csr_save1_data;
 wire [31:0] csr_save2_data;
 wire [31:0] csr_save3_data;
 wire [31:0] coreid_in;
-wire ertn_flush;
-wire [7:0] hw_int_in;
+wire        ertn_flush;
+wire [7:0]  hw_int_in;
+wire        has_int;
+wire        ipi_int_in;
 
 wire [31:0]  rj_value;
 wire [31:0]  rkd_value;
@@ -117,16 +119,17 @@ assign wb_ecode = inst_syscall  ? 6'hb :
                   ine_detected  ? 6'hd :
                   ale_detected  ? 6'h9 :
                   6'h0;
-assign wb_esubcode = 0;
+assign wb_esubcode = 9'b0;
 assign wb_vaddr =   adef_detected ? pc :
                     ale_detected  ? data_sram_addr_error : 32'b0;
-assign csr_save0_data = 0;
-assign csr_save1_data = 0;
-assign csr_save2_data = 0;
-assign csr_save3_data = 0;
-assign coreid_in = 0;
-assign ertn_flush = inst_ertn;
-assign hw_int_in = 0;
+assign csr_save0_data = 32'b0;
+assign csr_save1_data = 32'b0;
+assign csr_save2_data = 32'b0;
+assign csr_save3_data = 32'b0;
+assign coreid_in      = 32'b0;
+assign ertn_flush     = inst_ertn;
+assign hw_int_in      = 8'b0;
+assign ipi_int_in     = 1'b0;
 
 assign wb_csr_num = wb_ertn ? 14'h6 : csr_num;
 assign csr_era = csr_rvalue;
@@ -152,7 +155,8 @@ csr my_csr(
     .csr_save3_data(csr_save3_data),
     .coreid_in(coreid_in),
     .ertn_flush(ertn_flush),
-    .hw_int_in(hw_int_in)
+    .hw_int_in(hw_int_in),
+    .has_int(has_int)
 );
 
 // debug info generate

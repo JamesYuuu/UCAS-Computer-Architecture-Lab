@@ -233,7 +233,7 @@ assign data_sram_we    = after_ex ? 4'b0 :
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data;
-assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] == 2'b00)) ? 1'b1 :
+assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] != 2'b00)) ? 1'b1 :
                        ((inst_st_h | inst_ld_h | inst_ld_hu) & (data_sram_addr[0] == 1'b1)) ? 1'b1 : 1'b0;
 assign out_es_valid = es_valid;
 
