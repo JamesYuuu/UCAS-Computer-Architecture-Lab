@@ -67,7 +67,7 @@ wire [31:0] rkd_value;
 assign {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
-assign mem_ex = csr_data[29];
+assign mem_ex = csr_data[29];       // note that csr_data[29] means inst_syscall
 
 //bobbbbbbbbbby add below
 wire [31:0] ld_b_result;
