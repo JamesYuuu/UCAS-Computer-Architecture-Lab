@@ -195,14 +195,20 @@ end
 
 // control csr_estat_is;
 always @(posedge clk) begin
+    // software interrupt
     if (reset)
         csr_estat_is[1:0] <= 2'b0;
     else if (csr_we && is_csr_estat)
         csr_estat_is[1:0] <= csr_wmask[1:0] & csr_wvalue[1:0]
                           | ~csr_wmask[1:0] & csr_estat_is[1:0];
+
+    // hardware interrupt
     csr_estat_is[9:2] <= hw_int_in[7:0];
+
+    // reserve
     csr_estat_is[10]  <= 1'b0;
 
+    // timer interrupt
     if (timer_cnt[31:0]==32'b0)
         csr_estat_is[11] <= 1'b1;
     else if (csr_we && is_csr_ticlr && csr_wmask[0] && csr_wvalue[0])

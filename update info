@@ -1,5 +1,0 @@
-在IF_stage增加取指地址错: adef_detected
-在ID_stage增加断点指令: inst_break
-在EX_stage增加地址非对齐错: ale_detected
-在ID_stage增加指令不存在: ine_detected
-以上四个信号往后传

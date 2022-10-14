@@ -6,10 +6,10 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [201:0]     ds_to_es_bus,
+    input   [204:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [173:0]     es_to_ms_bus,
+    output  [177:0]     es_to_ms_bus,
     // data sram interface
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
@@ -40,7 +40,7 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
-reg [201:0] ds_to_es_bus_r;
+reg [204:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -207,8 +207,11 @@ assign write_result = (is_mul) ? mul_result :
 
 // deal with input and output
 wire [33:0] csr_data;
-assign {alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+wire [2:0]  prev_exception_op;
+wire [3:0]  next_exception_op;
+assign next_exception_op = {prev_exception_op,ale_detected};
+assign {prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 // add support for sd
 // code by JamesYu

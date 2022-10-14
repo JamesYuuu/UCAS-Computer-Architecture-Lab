@@ -7,7 +7,7 @@ module IF_stage(
     input   [33:0]  br_bus,
     // output to ID stage
     output          fs_to_ds_valid,
-    output  [63:0]  fs_to_ds_bus,
+    output  [64:0]  fs_to_ds_bus,
     // inst sram interface
     output          inst_sram_en,
     output  [3:0]   inst_sram_we,
@@ -40,7 +40,7 @@ assign {br_taken_cancel,br_taken,br_target} = br_bus;
 // signals to output for ID_stage
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
-assign fs_to_ds_bus = {fs_inst,fs_pc};
+assign fs_to_ds_bus = {adef_detected,fs_inst,fs_pc};
 
 // pre-IF stage
 assign seq_pc       = fs_pc + 3'h4;
