@@ -23,6 +23,8 @@ module EXE_stage(
     input               wb_ertn
 );
 
+wire ale_detected;
+
 wire [11:0] alu_op;
 wire        src1_is_pc;
 wire        src2_is_imm;
@@ -106,6 +108,11 @@ wire [31:0] st_data;
 wire inst_st_b;
 wire inst_st_h;
 wire inst_st_w;
+wire inst_ld_b;
+wire inst_ld_bu;
+wire inst_ld_h;
+wire inst_ld_hu;
+wire inst_ld_w; 
 wire [4:0] ld_op;
 wire [7:0] ldst_op;
 always @ (posedge clk)
@@ -207,6 +214,7 @@ assign es_to_ms_bus = {rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest
 // code by JamesYu
 assign {inst_st_b,inst_st_h,inst_st_w} = ldst_op[2:0];
 assign ld_op = ldst_op[7:3];
+assign {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w}=ld_op;
 
 assign st_data = inst_st_b ? {4{rkd_value[ 7:0]}} :
                  inst_st_h ? {2{rkd_value[15:0]}} : rkd_value[31:0];
@@ -221,7 +229,8 @@ assign data_sram_we    = after_ex ? 4'b0 :
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data;
-
+assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] == 2'b00)) ? 1'b1 :
+                       ((inst_st_h | inst_ld_h | inst_ld_hu) & (data_sram_addr[0] == 1'b1)) ? 1'b1 : 1'b0;
 assign out_es_valid = es_valid;
 
 endmodule

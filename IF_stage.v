@@ -20,6 +20,8 @@ module IF_stage(
     input   [31:0]  csr_eentry,
     input   [31:0]  csr_era
 );
+// to detech adef
+wire adef_detected;
 
 reg         fs_valid;
 wire        fs_ready_go;
@@ -45,6 +47,8 @@ assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       =   wb_ex       ? csr_eentry :
                         wb_ertn     ? csr_era   :
                         br_taken    ? br_target : seq_pc;
+
+assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
 
 // IF stage
 assign fs_ready_go     = 1'b1;
