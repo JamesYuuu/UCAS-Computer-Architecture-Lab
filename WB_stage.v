@@ -156,7 +156,8 @@ csr my_csr(
     .coreid_in(coreid_in),
     .ertn_flush(ertn_flush),
     .hw_int_in(hw_int_in),
-    .has_int(has_int)
+    .has_int(has_int),
+    .ipi_int_in(ipi_int_in)
 );
 
 // debug info generate
