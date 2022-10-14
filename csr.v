@@ -312,6 +312,7 @@ assign csr_ticlr_clr = 1'b0;
 
 assign csr_rvalue = ({32{is_csr_crmd}} & csr_crmd)
                   | ({32{is_csr_prmd}} & csr_prmd)
+                  | ({32{is_csr_ecfg}} & csr_ecfg)
                   | ({32{is_csr_estat}} & csr_estat)
                   | ({32{is_csr_era}} & csr_era)
                   | ({32{is_csr_badv}} & csr_badv)
