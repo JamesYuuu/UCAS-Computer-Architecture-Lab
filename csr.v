@@ -13,10 +13,6 @@ module csr(
     input              wb_ex,
     input   [31:0]     wb_pc,
     input   [31:0]     wb_vaddr,
-    input   [31:0]     csr_save0_data,
-    input   [31:0]     csr_save1_data,
-    input   [31:0]     csr_save2_data,
-    input   [31:0]     csr_save3_data,
     input   [31:0]     coreid_in,
     input              ertn_flush,
     input   [7:0]      hw_int_in,
@@ -255,16 +251,16 @@ end
 always @(posedge clk) begin
     if (csr_we && is_csr_save0)
         csr_save0 <= csr_wmask[31:0] & csr_wvalue[31:0]
-                  | ~csr_wmask[31:0] & csr_save0_data;
+                  | ~csr_wmask[31:0] & csr_save0;
     if (csr_we && is_csr_save1)
         csr_save1 <= csr_wmask[31:0] & csr_wvalue[31:0]
-                  | ~csr_wmask[31:0] & csr_save1_data;
+                  | ~csr_wmask[31:0] & csr_save1;
     if (csr_we && is_csr_save2)
         csr_save2 <= csr_wmask[31:0] & csr_wvalue[31:0]
-                  | ~csr_wmask[31:0] & csr_save2_data;
+                  | ~csr_wmask[31:0] & csr_save2;
     if (csr_we && is_csr_save3)
         csr_save3 <= csr_wmask[31:0] & csr_wvalue[31:0]
-                  | ~csr_wmask[31:0] & csr_save3_data;
+                  | ~csr_wmask[31:0] & csr_save3;
 end
 
 // control csr_tid
