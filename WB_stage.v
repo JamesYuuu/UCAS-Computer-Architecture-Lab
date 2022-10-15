@@ -5,7 +5,7 @@ module WB_stage(
     output              ws_allowin,
     // input from EXE stage
     input               ms_to_ws_valid,
-    input   [172:0]     ms_to_ws_bus,
+    input   [205:0]     ms_to_ws_bus,
     // output for reg_file
     output  [38:0]      rf_bus,
     // trace debug interface
@@ -18,7 +18,7 @@ module WB_stage(
     output [31:0]       csr_eentry,
     output [31:0]       csr_era,
     output              wb_ertn,
-    input  [31:0]       data_sram_addr_error,
+    output [63:0]       stable_counter_value,
     output              has_int
 );
 
@@ -33,8 +33,9 @@ wire [31:0] rf_wdata;
 
 reg          ws_valid;
 wire         ws_ready_go;
-reg  [172:0] ms_to_ws_bus_r;
+reg  [205:0] ms_to_ws_bus_r;
 
+wire [31:0]  data_sram_addr_error;
 wire [33:0]  csr_data;
 wire [4:0]   csr_op;
 wire [13:0]  csr_num;
@@ -45,6 +46,7 @@ wire         inst_csrwr;
 wire         inst_csrxchg;
 wire         inst_ertn;
 wire         inst_syscall;
+wire         inst_rdcntid;
 wire         ds_has_int;
 
 wire [3:0]   exception_op;
@@ -74,11 +76,12 @@ assign  {csr_op,csr_num,csr_code}=csr_data;
 assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall}=csr_op;
 assign  {adef_detected,inst_break,ine_detected,ale_detected}=exception_op;
 
-assign rf_we    = gr_we && ws_valid;
+assign rf_we    = gr_we && ws_valid && ~(wb_ex);
 assign rf_waddr = dest;
 assign rf_wdata = inst_csrrd ? csr_rvalue : 
                   inst_csrwr ? csr_rvalue :
                   inst_csrxchg ? csr_rvalue :
+                  inst_rdcntid ? csr_rvalue :
                   final_result;
 
 assign ws_ready_go = 1'b1;
@@ -99,13 +102,13 @@ always @(posedge clk) begin
 end
 
 //deal with input and output
-assign {ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
+assign {inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
 assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
 assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
 
-assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn;
+assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn | inst_rdcntid;
 assign csr_we = inst_csrwr | inst_csrxchg;
 assign csr_wmask =  inst_csrwr ? 32'hffffffff :
                     inst_csrxchg ? rj_value : 32'b0;
@@ -124,7 +127,9 @@ assign ertn_flush     = inst_ertn;
 assign hw_int_in      = 8'b0;
 assign ipi_int_in     = 1'b0;
 
-assign wb_csr_num = wb_ertn ? 14'h6 : csr_num;
+assign wb_csr_num = wb_ertn ? 14'h6 : 
+                    inst_rdcntid ? 14'h40 :
+                    csr_num;
 assign csr_era = csr_rvalue;
 
 csr my_csr(
@@ -146,7 +151,8 @@ csr my_csr(
     .ertn_flush(ertn_flush),
     .hw_int_in(hw_int_in),
     .has_int(has_int),
-    .ipi_int_in(ipi_int_in)
+    .ipi_int_in(ipi_int_in),
+    .stable_counter_value(stable_counter_value)
 );
 
 // debug info generate

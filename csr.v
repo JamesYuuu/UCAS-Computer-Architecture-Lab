@@ -17,6 +17,7 @@ module csr(
     input              ertn_flush,
     input   [7:0]      hw_int_in,
     output             has_int,
+    output  [63:0]     stable_counter_value,
     input              ipi_int_in
 );
 
@@ -306,6 +307,16 @@ always @(posedge clk) begin
 end
 
 assign csr_tval = timer_cnt;
+
+reg [63:0] stable_counter_r;
+assign stable_counter_value = stable_counter_r;
+
+always @(posedge clk) begin
+    if(reset)
+        stable_counter_r <= 64'b0;
+    else
+        stable_counter_r <= stable_counter_r + 1;
+end
 
 // control csr_ticlr_clr
 assign csr_ticlr_clr = 1'b0;

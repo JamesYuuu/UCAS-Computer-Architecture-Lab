@@ -6,10 +6,10 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [205:0]     ds_to_es_bus,
+    input   [208:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [178:0]     es_to_ms_bus,
+    output  [211:0]     es_to_ms_bus,
     // data sram interface
     output wire         data_sram_en,
     output wire [3:0]   data_sram_we,
@@ -21,7 +21,8 @@ module EXE_stage(
     input               wb_ex,
     input               mem_ex,
     input               wb_ertn,
-    output [31:0]       data_sram_addr_error
+    input               mem_ertn,
+    input [63:0]        stable_counter_value
 );
 
 wire ale_detected;
@@ -41,7 +42,8 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
-reg [205:0] ds_to_es_bus_r;
+wire [31:0] alu_result1;
+reg [208:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -50,13 +52,15 @@ alu u_alu(
     .alu_op     (alu_op    ),
     .alu_src1   (alu_src1  ),
     .alu_src2   (alu_src2  ),
-    .alu_result (alu_result)
+    .alu_result (alu_result1)
     );
 
 reg     es_valid;
 wire    es_ready_go;
 
 wire       after_ex;
+wire       after_ertn;
+assign     after_ertn = mem_ertn | wb_ertn;
 assign     after_ex = mem_ex | wb_ex;
 
 // code by JamesYu
@@ -148,6 +152,8 @@ begin
     end
     else
     begin
+        div_signed_valid <= 0;
+        div_unsigned_valid <= 0;
         div_signed_got <= 0;
         div_unsigned_got <= 0;
     end
@@ -186,7 +192,7 @@ always @(posedge clk) begin
     if (reset) begin
         es_valid <= 1'b0;
     end
-    else if(wb_ex | wb_ertn) begin
+    else if(wb_ex | wb_ertn | ale_detected) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin
@@ -210,10 +216,23 @@ assign write_result = (is_mul) ? mul_result :
 wire [33:0] csr_data;
 wire [2:0]  prev_exception_op;
 wire [3:0]  next_exception_op;
+wire [31:0] data_sram_addr_error;
+wire [2:0] inst_stable_counter;
+wire inst_rdcntid;
+wire inst_rdcntvh_w;
+wire inst_rdcntvl_w;
 wire        ds_has_int;
 assign next_exception_op = {prev_exception_op,ale_detected};
-assign {ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign {inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+
+assign inst_rdcntid = inst_stable_counter[2];
+assign inst_rdcntvh_w = inst_stable_counter[1];
+assign inst_rdcntvl_w = inst_stable_counter[0];
+wire [31:0] stable_counter_result;
+assign stable_counter_result =  inst_rdcntvh_w ? stable_counter_value[63:32] :
+                                inst_rdcntvl_w ? stable_counter_value[31:0] : 0;
+assign alu_result = (inst_rdcntvh_w | inst_rdcntvl_w) ? stable_counter_result : alu_result1;
 
 // add support for sd
 // code by JamesYu
@@ -229,8 +248,10 @@ assign final_mem_we = inst_st_w ? 4'b1111 :
                       inst_st_h ? (mem_we << alu_result[1:0]) :
                       inst_st_b ? (mem_we << alu_result[1:0]) : 4'b0000;
 
-assign data_sram_we    = after_ex ? 4'b0 :
-                         es_valid ? (final_mem_we) : 4'b0;
+assign data_sram_we    = after_ex       ? 4'b0 :
+                         after_ertn     ? 4'b0 :
+                         ale_detected   ? 4'b0 :
+                         es_valid       ? (final_mem_we) : 4'b0;
 assign data_sram_en    = 1'h1;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data;
