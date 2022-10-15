@@ -9,7 +9,7 @@ module ID_stage(
     input   [64:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [205:0] ds_to_es_bus,
+    output  [208:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -17,8 +17,8 @@ module ID_stage(
     // input for hazard
     input           out_ms_valid,
     input           out_es_valid,
-    input   [172:0] ms_to_ws_bus,
-    input   [178:0] es_to_ms_bus,
+    input   [205:0] ms_to_ws_bus,
+    input   [211:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
@@ -147,6 +147,9 @@ wire [13:0] ms_csrnum;
 wire        es_csr;
 wire        ms_csr;
 
+wire        es_inst_rdcntid;
+wire        ms_inst_rdcntid;
+
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
 assign op_21_20  = ds_inst[21:20];
@@ -207,6 +210,10 @@ wire inst_mod_w;
 wire inst_div_wu;
 wire inst_mod_wu;
 
+wire inst_rdcntvl_w;
+wire inst_rdcntvh_w;
+wire inst_rdcntid;
+
 assign inst_slti    = op_31_26_d[6'b000000] & op_25_22_d[4'b1000];
 assign inst_sltui   = op_31_26_d[6'b000000] & op_25_22_d[4'b1001];
 assign inst_andi    = op_31_26_d[6'b000000] & op_25_22_d[4'b1101];
@@ -225,6 +232,11 @@ assign inst_div_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2
 assign inst_mod_w   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00001];
 assign inst_div_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00010];
 assign inst_mod_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b10] & op_19_15_d[5'b00011];
+
+assign inst_rdcntvl_w = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11000) & (ds_inst[9:5] == 5'b00000);
+assign inst_rdcntvh_w = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11001) & (ds_inst[9:5] == 5'b00000);
+assign inst_rdcntid   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11000) & (ds_inst[4:0] == 5'b00000);
+
 wire need_ui12;
 wire rj_eq_rd;
 wire rj_above_rd;
@@ -285,57 +297,60 @@ assign inst_ertn = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b0
 assign csr_num = ds_inst[23:10];
 
 assign ine_detected = ~(
-                            inst_add_w  |
-                            inst_sub_w  |
-                            inst_slt    |
-                            inst_sltu   |
-                            inst_nor    |
-                            inst_and    |
-                            inst_or     |
-                            inst_xor    |
-                            inst_slli_w |
-                            inst_srli_w |
-                            inst_srai_w |
-                            inst_addi_w |
-                            inst_ld_w   |
-                            inst_st_w   |
-                            inst_jirl   |
-                            inst_b      |
-                            inst_bl     |
-                            inst_beq    |
-                            inst_bne    |
-                            inst_lu12i_w|
-                            inst_slti   |
-                            inst_sltui  |
-                            inst_andi   |
-                            inst_ori    |
-                            inst_xori   |
-                            inst_sll_w  |
-                            inst_srl_w  |
-                            inst_sra_w  |
-                            inst_mul_w  |
-                            inst_mulh_w |
-                            inst_mulh_wu|
-                            inst_div_w  |
-                            inst_mod_w  |
-                            inst_div_wu |
-                            inst_mod_wu |
-                            inst_blt    |
-                            inst_bge    |
-                            inst_bltu   |
-                            inst_bgeu   |
-                            inst_ld_b   |
-                            inst_ld_h   |
-                            inst_ld_bu  |
-                            inst_ld_hu  |
-                            inst_st_b   |
-                            inst_st_h   |
-                            inst_csrrd  |
-                            inst_csrwr  |
-                            inst_csrxchg|
-                            inst_ertn   |
-                            inst_syscall|
-                            inst_break  |
+                            inst_add_w      |
+                            inst_sub_w      |
+                            inst_slt        |
+                            inst_sltu       |
+                            inst_nor        |
+                            inst_and        |
+                            inst_or         |
+                            inst_xor        |
+                            inst_slli_w     |
+                            inst_srli_w     |
+                            inst_srai_w     |
+                            inst_addi_w     |
+                            inst_ld_w       |
+                            inst_st_w       |
+                            inst_jirl       |
+                            inst_b          |
+                            inst_bl         |
+                            inst_beq        |
+                            inst_bne        |
+                            inst_lu12i_w    |
+                            inst_slti       |
+                            inst_sltui      |
+                            inst_andi       |
+                            inst_ori        |
+                            inst_xori       |
+                            inst_sll_w      |
+                            inst_srl_w      |
+                            inst_sra_w      |
+                            inst_mul_w      |
+                            inst_mulh_w     |
+                            inst_mulh_wu    |
+                            inst_div_w      |
+                            inst_mod_w      |
+                            inst_div_wu     |
+                            inst_mod_wu     |
+                            inst_blt        |
+                            inst_bge        |
+                            inst_bltu       |
+                            inst_bgeu       |
+                            inst_ld_b       |
+                            inst_ld_h       |
+                            inst_ld_bu      |
+                            inst_ld_hu      |
+                            inst_st_b       |
+                            inst_st_h       |
+                            inst_csrrd      |
+                            inst_csrwr      |
+                            inst_csrxchg    |
+                            inst_ertn       |
+                            inst_syscall    |
+                            inst_break      |
+                            inst_rdcntid    |
+                            inst_rdcntvh_w  |
+                            inst_rdcntvl_w  |
                             inst_pcaddu12i
 );
 
@@ -415,7 +430,8 @@ assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h 
 assign mem_we        =  inst_st_w ? 4'b1111 : 
                         inst_st_h ? 4'b0011 :
                         inst_st_b ? 4'b0001 : 4'b0000;
-assign dest          = dst_is_r1 ? 5'd1 : rd;
+assign dest          =  inst_rdcntid    ? rj :
+                        dst_is_r1       ? 5'd1 : rd;
 
 assign rf_raddr1 = rj;
 assign rf_raddr2 = src_reg_is_rd ? rd :rk;
@@ -456,15 +472,16 @@ assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
 wire [6:0] divmul_op;
 wire [7:0] ldst_op;
 wire [2:0] next_exception_op;
+wire [2:0] inst_stable_counter;
 assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div_w,inst_mod_w,inst_div_wu,inst_mod_wu};
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 assign next_exception_op         = {prev_exception_op,inst_break,ine_detected};
-
-assign ds_to_es_bus              = {has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
+assign inst_stable_counter       = {inst_rdcntid, inst_rdcntvh_w, inst_rdcntvl_w};
+assign ds_to_es_bus              = {inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));
-assign ds_allowin       = !ds_valid || wb_ex || ds_ready_go && es_allowin;
+assign ds_allowin       = !ds_valid || wb_ex || wb_ertn || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
 always @(posedge clk) begin
@@ -518,8 +535,10 @@ assign hazard      = (both_src && either_hazard) ? 1'b1:
 // csr hazard
 assign      {es_inst_csrrd,es_inst_csrwr,es_inst_csrxchg,es_inst_syscall,es_inst_ertn,es_csrnum} = {es_to_ms_bus[109:91]};
 assign      {ms_inst_csrrd,ms_inst_csrwr,ms_inst_csrxchg,ms_inst_syscall,ms_inst_ertn,ms_csrnum} = {ms_to_ws_bus[103:85]};
-assign      es_csr = es_inst_csrwr || es_inst_csrxchg || es_inst_csrrd;
-assign      ms_csr = ms_inst_csrwr || ms_inst_csrxchg || ms_inst_csrrd;
+assign      es_inst_rdcntid = es_to_ms_bus[211];
+assign      ms_inst_rdcntid = ms_to_ws_bus[205];
+assign      es_csr = es_inst_csrwr || es_inst_csrxchg || es_inst_csrrd || es_inst_rdcntid;
+assign      ms_csr = ms_inst_csrwr || ms_inst_csrxchg || ms_inst_csrrd || ms_inst_rdcntid;
 
 // assign      common_csr = (es_csr || ms_csr) && (inst_csrrd || inst_csrwr || inst_csrxchg) && (es_csrnum == csr_num || ms_csrnum == csr_num);
 // assign      special_csr = ((es_inst_csrwr || es_inst_csrxchg || ms_inst_csrwr || ms_inst_csrxchg) && (inst_syscall || inst_ertn)) || ((es_inst_ertn || ms_inst_ertn) && inst_syscall);

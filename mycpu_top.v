@@ -32,9 +32,9 @@ wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
 wire [64:0]  fs_to_ds_bus;
-wire [205:0] ds_to_es_bus;
-wire [178:0] es_to_ms_bus;
-wire [172:0] ms_to_ws_bus;
+wire [208:0] ds_to_es_bus;
+wire [211:0] es_to_ms_bus;
+wire [205:0] ms_to_ws_bus;
 wire [38:0]  rf_bus;
 wire [33:0]  br_bus;
 wire         out_ms_valid;
@@ -42,10 +42,11 @@ wire         out_es_valid;
 wire         wb_ex;
 wire         mem_ex;
 wire         wb_ertn;
+wire         mem_ertn;
 wire [31:0]  csr_eentry;
 wire [31:0]  csr_era;
-wire [31:0]  data_sram_addr_error;
 wire         has_int;
+wire [63:0]  stable_counter_value;
 
 // IF stage
 IF_stage IF_stage(
@@ -121,7 +122,8 @@ EXE_stage EXE_stage(
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .mem_ex         (mem_ex         ),
-    .data_sram_addr_error(data_sram_addr_error)
+    .mem_ertn       (mem_ertn       ),
+    .stable_counter_value(stable_counter_value)
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -143,6 +145,7 @@ MEM_stage MEM_stage(
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
+    .mem_ertn       (mem_ertn       ),
     .mem_ex         (mem_ex         )
 );
 // WB stage
@@ -166,8 +169,8 @@ WB_stage WB_stage(
     .wb_ertn        (wb_ertn        ),
     .csr_era        (csr_era        ),
     .csr_eentry     (csr_eentry     ),
-    .data_sram_addr_error(data_sram_addr_error),
-    .has_int        (has_int)
+    .has_int        (has_int        ),
+    .stable_counter_value(stable_counter_value)
 );
 
 endmodule
