@@ -321,7 +321,7 @@ end
 // control csr_ticlr_clr
 assign csr_ticlr_clr = 1'b0;
 
-assign csr_rvalue = ({32{is_csr_crmd}} & csr_crmd)
+assign csr_rvalue = (({32{is_csr_crmd}} & csr_crmd)
                   | ({32{is_csr_prmd}} & csr_prmd)
                   | ({32{is_csr_ecfg}} & csr_ecfg)
                   | ({32{is_csr_estat}} & csr_estat)
@@ -336,7 +336,7 @@ assign csr_rvalue = ({32{is_csr_crmd}} & csr_crmd)
                   | ({32{is_csr_tid}} & csr_tid)
                   | ({32{is_csr_tcfg}} & csr_tcfg)
                   | ({32{is_csr_tval}} & csr_tval)
-                  | ({32{is_csr_ticlr}} & csr_ticlr);
+                  | ({32{is_csr_ticlr}} & csr_ticlr)) && csr_re;
 
 assign has_int = ((csr_estat_is[11:0] & csr_ecfg_lie[11:0]) != 12'b0) && (csr_crmd_ie == 1'b1);
 
