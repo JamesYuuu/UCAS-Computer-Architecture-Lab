@@ -365,7 +365,7 @@ assign csr_data = {csr_op,csr_num,csr_code};
 assign alu_op[ 0] = inst_add_w  | inst_addi_w   | inst_ld_w | inst_st_w
                                 | inst_jirl     | inst_bl   | inst_pcaddu12i
                                 | inst_ld_b     | inst_ld_h | inst_ld_bu
-                                | inst_ld_hu    | inst_st_b | inst_st_h;   //add
+                                | inst_ld_hu    | inst_st_b | inst_st_h;        //add
 assign alu_op[ 1] = inst_sub_w;                                                 //sub
 assign alu_op[ 2] = inst_slt    | inst_slti;                                    //slt
 assign alu_op[ 3] = inst_sltu   | inst_sltui;                                   //sltu

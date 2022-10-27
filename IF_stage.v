@@ -9,11 +9,15 @@ module IF_stage(
     output          fs_to_ds_valid,
     output  [64:0]  fs_to_ds_bus,
     // inst sram interface
-    output          inst_sram_en,
-    output  [3:0]   inst_sram_we,
-    output  [31:0]  inst_sram_addr,
-    output  [31:0]  inst_sram_wdata,
-    input   [31:0]  inst_sram_rdata,
+    output          inst_sram_req,       // if there is a request
+    output          inst_sram_wr,        // read or write
+    output  [3:0]   inst_sram_wstrb,     // write strobes
+    output  [1:0]   inst_sram_size,      // number of bytes  0:1 bytes 1:2bytes 2:4bytes
+    output  [31:0]  inst_sram_addr,      // request addr
+    output  [31:0]  inst_sram_wdata,     // write data
+    input   [31:0]  inst_sram_rdata,     // read data
+    input           inst_sram_addr_ok,   // if data and addr has been received
+    input           inst_sram_data_ok,   // if data has been written or given back
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
@@ -76,6 +80,7 @@ always @(posedge clk) begin
     end
 end
 
+// FIXME: reconstruct inst_sram
 // interface with sram
 assign inst_sram_we     = 4'h0;
 assign inst_sram_en     = fs_allowin && ~reset;
