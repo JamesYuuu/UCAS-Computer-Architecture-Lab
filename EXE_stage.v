@@ -6,15 +6,18 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [208:0]     ds_to_es_bus,
+    input   [204:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [211:0]     es_to_ms_bus,
+    output  [212:0]     es_to_ms_bus,
     // data sram interface
-    output wire         data_sram_en,
-    output wire [3:0]   data_sram_we,
-    output wire [31:0]  data_sram_addr,
-    output wire [31:0]  data_sram_wdata,
+    output          data_sram_req,       // if there is a request
+    output          data_sram_wr,        // read or write    1 means write and 0 means read
+    output  [3:0]   data_sram_wstrb,     // write strobes
+    output  [1:0]   data_sram_size,      // number of bytes  0:1 bytes 1:2bytes 2:4bytes
+    output  [31:0]  data_sram_addr,      // request addr
+    output  [31:0]  data_sram_wdata,     // write data
+    input           data_sram_addr_ok,   // if data and addr has been received
     // output es_valid and bus for ID stage
     output              out_es_valid,
     // interrupt signal
@@ -32,7 +35,6 @@ wire        src1_is_pc;
 wire        src2_is_imm;
 wire        gr_we;
 wire        res_from_mem;
-wire [3: 0] mem_we;
 wire [31:0] pc;
 wire [4: 0] dest;
 wire [31:0] rj_value;
@@ -42,8 +44,8 @@ wire [31:0] imm;
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
-wire [31:0] alu_result1;
-reg [208:0] ds_to_es_bus_r;
+wire [31:0] alu_result_org;
+reg [204:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -52,7 +54,7 @@ alu u_alu(
     .alu_op     (alu_op    ),
     .alu_src1   (alu_src1  ),
     .alu_src2   (alu_src2  ),
-    .alu_result (alu_result1)
+    .alu_result (alu_result_org)
     );
 
 reg     es_valid;
@@ -120,6 +122,17 @@ wire inst_ld_hu;
 wire inst_ld_w; 
 wire [4:0] ld_op;
 wire [7:0] ldst_op;
+
+// data sram pre-declare
+// code by JamesYu
+wire   mem_re;
+wire   mem_we;
+wire [1:0] addr;
+wire [1:0] size;
+wire [3:0] wstrb;
+wire is_req;
+assign is_req = data_sram_req;
+
 always @ (posedge clk)
 begin
     if(inst_div_w | inst_mod_w)
@@ -203,10 +216,12 @@ always @(posedge clk) begin
     end
 end
 
-assign es_ready_go    = ~((inst_div_w | inst_mod_w) && (~div_signed_result_valid)) & ~((inst_div_wu | inst_mod_wu) && (~div_unsigned_result_valid));
+assign es_ready_go    = ((inst_div_w | inst_mod_w) && (~div_signed_result_valid)) & ~((inst_div_wu | inst_mod_wu) && (~div_unsigned_result_valid)) ? 1'b0:
+                        (mem_re || mem_we) ? data_sram_addr_ok : 1'b1;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
 
+// code by JamesYu
 // add result select
 wire [31:0] write_result;
 assign write_result = (is_mul) ? mul_result :
@@ -223,8 +238,8 @@ wire inst_rdcntvh_w;
 wire inst_rdcntvl_w;
 wire        ds_has_int;
 assign next_exception_op = {prev_exception_op,ale_detected};
-assign {inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,mem_we,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign {inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {is_req,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 assign inst_rdcntid = inst_stable_counter[2];
 assign inst_rdcntvh_w = inst_stable_counter[1];
@@ -232,7 +247,7 @@ assign inst_rdcntvl_w = inst_stable_counter[0];
 wire [31:0] stable_counter_result;
 assign stable_counter_result =  inst_rdcntvh_w ? stable_counter_value[63:32] :
                                 inst_rdcntvl_w ? stable_counter_value[31:0] : 0;
-assign alu_result = (inst_rdcntvh_w | inst_rdcntvl_w) ? stable_counter_result : alu_result1;
+assign alu_result = (inst_rdcntvh_w | inst_rdcntvl_w) ? stable_counter_result : alu_result_org;
 
 // add support for sd
 // code by JamesYu
@@ -243,22 +258,34 @@ assign {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w}=ld_op;
 assign st_data = inst_st_b ? {4{rkd_value[ 7:0]}} :
                  inst_st_h ? {2{rkd_value[15:0]}} : rkd_value[31:0];
 
-wire [3:0] final_mem_we;
-assign final_mem_we = inst_st_w ? 4'b1111 : 
-                      inst_st_h ? (mem_we << alu_result[1:0]) :
-                      inst_st_b ? (mem_we << alu_result[1:0]) : 4'b0000;
-
-assign data_sram_we    = after_ex       ? 4'b0 :
-                         after_ertn     ? 4'b0 :
-                         ale_detected   ? 4'b0 :
-                         es_valid       ? (final_mem_we) : 4'b0;
-assign data_sram_en    = 1'h1;
-assign data_sram_addr  = alu_result;
-assign data_sram_wdata = st_data;
 assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] != 2'b00)) ? 1'b1 :
                        ((inst_st_h | inst_ld_h | inst_ld_hu) & (data_sram_addr[0] == 1'b1)) ? 1'b1 : 1'b0;
 assign out_es_valid = es_valid;
-
 assign data_sram_addr_error = alu_result;
+
+
+// deal with data_sram
+assign mem_re = inst_ld_b || inst_ld_bu || inst_ld_h || inst_ld_hu || inst_ld_w;
+assign mem_we = inst_st_b || inst_st_h || inst_st_w;
+assign addr = alu_result[1:0];
+assign size = (inst_ld_w | inst_st_w) ? 2'b10 :
+              (inst_ld_h | inst_ld_hu | inst_st_h) ? 2'b1 : 2'b0;
+assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
+               (size==2'b00 && addr==2'b01) ? 4'b0010:
+               (size==2'b00 && addr==2'b10) ? 4'b0100:
+               (size==2'b00 && addr==2'b11) ? 4'b1000:
+               (size==2'b01 && addr==2'b00) ? 4'b0011:
+               (size==2'b01 && addr==2'b10) ? 4'b1100:
+               (size==2'b10 && addr==2'b00) ? 4'b1111: 4'b0000;
+
+// data sram interface
+assign data_sram_req   = (after_ex || after_ertn || ale_detected) ? 1'b0 :
+                         (mem_re && mem_we && es_valid) ? 1'b0 : 
+                         (ms_allowin) ? 1'b0 : 1'b1;
+assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
+assign data_sram_wstrb = wstrb;
+assign data_sram_size  = size;
+assign data_sram_addr  = alu_result;
+assign data_sram_wdata = st_data; 
 
 endmodule
