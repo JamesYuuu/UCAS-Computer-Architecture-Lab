@@ -9,7 +9,7 @@ module ID_stage(
     input   [64:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [208:0] ds_to_es_bus,
+    output  [204:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -427,9 +427,6 @@ assign src2_is_imm   = inst_slli_w |
 assign res_from_mem  = inst_ld_w | inst_ld_b | inst_ld_h | inst_ld_bu | inst_ld_hu;
 assign dst_is_r1     = inst_bl;
 assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h & ~inst_syscall & ~inst_ertn;
-assign mem_we        =  inst_st_w ? 4'b1111 : 
-                        inst_st_h ? 4'b0011 :
-                        inst_st_b ? 4'b0001 : 4'b0000;
 assign dest          =  inst_rdcntid    ? rj :
                         dst_is_r1       ? 5'd1 : rd;
 
@@ -477,7 +474,7 @@ assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 assign next_exception_op         = {prev_exception_op,inst_break,ine_detected};
 assign inst_stable_counter       = {inst_rdcntid, inst_rdcntvh_w, inst_rdcntvl_w};
-assign ds_to_es_bus              = {inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, mem_we, divmul_op , ldst_op ,csr_data};
+assign ds_to_es_bus              = {inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));

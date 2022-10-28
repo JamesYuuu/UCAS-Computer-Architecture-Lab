@@ -24,24 +24,13 @@ module IF_stage(
     input   [31:0]  csr_eentry,
     input   [31:0]  csr_era
 );
-
 wire handshake;
-assign handshake = inst_sram_addr_ok & inst_sram_req;
-parameter if_empty  = 2'b01;
-parameter if_full   = 2'b10;
-parameter preif_req = 3'b001;
-parameter preif_inst= 3'b010;
-parameter preif_br_req = 3'b110;
+reg [5:0] preif_current_state;
+reg [5:0] preif_next_state;
 
-reg [1:0] if_current_state;
-reg [1:0] if_next_state;
-reg [2:0] preif_current_state;
-reg [2:0] preif_next_state;
-
-assign inst_sram_wr = 0;
-assign inst_sram_wstrb = 0;
-assign inst_sram_size = 2'b10;
-assign inst_sram_wdata = 0;
+// instruction buffer
+reg [31:0] inst_buff;
+reg inst_buff_valid;
 
 // to detech adef
 wire adef_detected;
@@ -49,9 +38,11 @@ wire adef_detected;
 reg         fs_valid;
 wire        fs_ready_go;
 wire        fs_allowin;
+wire        pre_fs_ready_go;
 
 // signals for pc
 wire [31:0] seq_pc;
+reg [31:0] nextpc_r;
 wire [31:0] nextpc;
 
 // signals from branch
@@ -65,142 +56,37 @@ wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
 assign fs_to_ds_bus = {adef_detected,fs_inst,fs_pc};
 
-reg [31:0]  last_nextpc;
-always @(posedge clk)
-begin
-    if(reset)
-    begin
-        last_nextpc <= 32'h1C000000;
-    end
-    else
-        last_nextpc <= nextpc;
-end
 // pre-IF stage
-assign seq_pc       = fs_pc + 3'h4;
+assign seq_pc       =   fs_pc + 3'h4;
+
+always @(posedge clk) begin
+    nextpc_r <= nextpc;
+end
+    
 assign nextpc       =   wb_ex       ? csr_eentry :
                         wb_ertn     ? csr_era   :
-                        preif_current_state[2] ? last_nextpc:
+                        preif_current_state[2] ? nextpc_r :
+                        preif_current_state[3] ? nextpc_r :
+                        preif_current_state[4] ? nextpc_r :
                         br_taken    ? br_target : seq_pc;
+
+assign pre_fs_ready_go = (inst_sram_req && inst_sram_addr_ok);
 
 assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
 
-
-
 // IF stage
-assign fs_ready_go     = ~preif_current_state[2] & ((if_current_state[0] & inst_sram_data_ok & ds_allowin) | if_current_state[1]);
-assign fs_allowin      = !(fs_valid & fs_ready_go) | fs_ready_go & ds_allowin | preif_current_state[2];
+assign fs_ready_go     = preif_current_state[1] & inst_sram_data_ok | preif_current_state[5] & inst_sram_data_ok | inst_buff_valid;
+assign fs_allowin     = !(fs_valid & ~preif_current_state[2] & ~preif_current_state[3] & ~preif_current_state[4]) || fs_ready_go && ds_allowin;
 assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         fs_valid <= 1'b0;
     end
     else if (fs_allowin) begin
-        fs_valid <= 1'b1;
+        fs_valid <= pre_fs_ready_go;
     end
     else if (br_taken_cancel) begin
         fs_valid <= 1'b0;
-    end
-end
-
-always @(posedge clk)
-begin
-    if(reset)
-    begin
-        if_current_state <= if_empty;
-        preif_current_state <= preif_req;
-    end
-    else
-    begin
-        if_current_state <= if_next_state;
-        preif_current_state <= preif_next_state;
-    end
-end
-
-always @(*)
-begin
-    if(if_current_state[0])
-    begin
-        if(~inst_sram_data_ok)
-            if_next_state <= if_empty;
-        else if(inst_sram_data_ok && ds_allowin)
-            if_next_state <= if_empty;
-        else if(inst_sram_data_ok & ~ds_allowin)
-            if_next_state <= if_full;
-    end
-    else// if(if_current_state[1])
-    begin
-        if(ds_allowin)
-            if_next_state <= if_empty;
-        else
-            if_next_state <= if_full;
-    end
-end
-
-always @(*)
-begin
-    if(preif_current_state[0])
-    begin
-        /*if(handshake)
-            preif_next_state <= preif_inst;
-        else
-            preif_next_state <= preif_req;*/
-        if(~br_taken)
-        begin
-            if(handshake)
-                preif_next_state <= preif_inst;
-            else
-                preif_next_state <= preif_req;
-        end
-        else//if(br_taken)
-        begin
-            if(~handshake)
-                preif_next_state <= preif_br_req;
-            else
-                preif_next_state <= preif_inst;
-        end
-    end
-    else if(preif_current_state[1])
-    begin
-        if(~br_taken)
-        begin
-            if(inst_sram_data_ok)
-            begin
-                if(handshake)
-                begin
-                    preif_next_state <= preif_inst;
-                end
-                else
-                begin
-                    preif_next_state <= preif_req;
-                end
-            end
-            else if(~inst_sram_data_ok)
-            begin
-                preif_next_state <= preif_inst;
-            end
-        end
-        else// if(br taken)
-        begin
-            if(handshake)
-            begin
-                preif_next_state <= preif_inst;
-            end
-            else
-            begin
-                preif_next_state <= preif_br_req;
-            end
-        end
-    end
-    else if(preif_current_state[2])
-    begin
-        if(handshake)
-        begin
-            preif_next_state <= preif_inst;
-        end
-        else
-        begin
-            preif_next_state <= preif_br_req;
-        end
     end
 end
 
@@ -209,18 +95,205 @@ always @(posedge clk) begin
     if (reset) begin
         fs_pc <= 32'h1BFFFFFC;  // make nextpc=0x1C000000;
     end
-    else if (fs_allowin & inst_sram_req & inst_sram_addr_ok) begin
+    else if (handshake & preif_current_state[0] | preif_current_state[1] & handshake | preif_current_state[4] & handshake | preif_current_state[5] & handshake) begin
         fs_pc <= nextpc;
+    end
+    else begin
+        fs_pc <= fs_pc;
     end
 end
 
-assign inst_sram_req = fs_allowin & (preif_current_state[0] | (preif_current_state[1] & inst_sram_data_ok & fs_allowin) | preif_current_state[2]);
-// FIXME: reconstruct inst_sram
+always @(posedge clk)
+begin
+    if (reset)
+    begin
+        inst_buff <= 32'b0;
+        inst_buff_valid <= 1'b0;
+    end
+    else if (!ds_allowin & fs_ready_go)
+    begin
+        inst_buff <= inst_sram_rdata;
+        inst_buff_valid <= 1'b1;
+    end
+    else
+    begin
+        inst_buff <= 32'b0;
+        inst_buff_valid <= 1'b0;
+    end
+end
+
 // interface with sram
-assign inst_sram_we     = 4'h0;
-assign inst_sram_en     = fs_allowin && ~reset;
+assign inst_sram_req    = fs_allowin & (preif_current_state[0] | preif_current_state[1] & inst_sram_data_ok | preif_current_state[3] | preif_current_state[4] | preif_current_state[5] & inst_sram_data_ok);
 assign inst_sram_addr   = nextpc;
-assign inst_sram_wdata  = 32'h0;
+assign inst_sram_wr     = 1'b0;
+assign inst_sram_wstrb  = 4'b0;
+assign inst_sram_size   = 2'b10;
+assign inst_sram_wdata  = 32'b0;
+
 assign fs_inst          = inst_sram_rdata;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+assign handshake = inst_sram_req & inst_sram_addr_ok;
+reg prev_handshake;
+always @(posedge clk)
+begin
+    prev_handshake <= handshake;
+end
+
+
+parameter s0 = 7'b0000001;
+parameter s1 = 7'b0000010;
+parameter s2 = 7'b0000100;
+parameter s3 = 7'b0001000;
+parameter s4 = 7'b0010000;
+parameter s5 = 7'b0100000;
+
+
+
+always @(posedge clk)
+begin
+	if(reset)
+		preif_current_state <= s0;
+	else
+		preif_current_state <= preif_next_state;
+end
+
+always @(*)
+begin
+	if(preif_current_state[0])
+    begin
+        if(br_taken)
+        begin
+            if(handshake)
+            begin
+                preif_next_state <= s2;
+            end
+            else
+            begin
+                preif_next_state <= s3;
+            end
+        end
+        else
+        begin
+            if(~handshake)
+            begin
+                preif_next_state <= s0;
+            end
+            else
+            begin
+                preif_next_state <= s1;
+            end
+        end
+    end
+    else if(preif_current_state[1])
+    begin
+        if(br_taken)
+        begin
+            if(~inst_sram_data_ok & (handshake | prev_handshake))
+            begin
+                preif_next_state <= s2;
+            end
+            else if(~inst_sram_data_ok & ~(handshake | prev_handshake))
+            begin
+                preif_next_state <= s3;
+            end
+            else if(inst_sram_data_ok & handshake)
+            begin
+                preif_next_state <= s5;
+            end
+            else if(inst_sram_data_ok & ~handshake)
+            begin
+                preif_next_state <= s4;
+            end
+        end
+        else
+        begin
+            if(~inst_sram_data_ok | handshake)
+            begin
+                preif_next_state <= s1;
+            end
+            else
+            begin
+                preif_next_state <= s0;
+            end
+        end
+    end
+    else if(preif_current_state[2])
+    begin
+        if(inst_sram_data_ok & ~handshake)
+        begin
+            preif_next_state <= s4;
+        end
+        else if(inst_sram_data_ok & handshake)
+        begin
+            preif_next_state <= s5;
+        end
+        else if(~inst_sram_data_ok)
+        begin
+            preif_next_state <= s2;
+        end
+    end
+    else if(preif_current_state[3])
+    begin
+        if(handshake)
+        begin
+            preif_next_state <= s2;
+        end
+        else
+        begin
+            preif_next_state <= s3;
+        end
+    end
+    else if(preif_current_state[4])
+    begin
+        if(handshake)
+        begin
+            preif_next_state <= s5;
+        end
+        else
+        begin
+            preif_next_state <= s4;
+        end
+    end
+    else if(preif_current_state[5])
+    begin
+        if(inst_sram_data_ok)
+        begin
+            if(handshake)
+                preif_next_state <= s1;
+            else
+                preif_next_state <= s0;
+        end
+        else
+        begin
+            preif_next_state <= s5;
+        end
+    end
+end
 
 endmodule
