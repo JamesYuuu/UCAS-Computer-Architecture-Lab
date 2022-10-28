@@ -47,7 +47,7 @@ wire       inst_ld_w;
 
 assign {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w}=ld_op;
 
-assign ms_ready_go    = (is_req)? data_sram_data_ok : 1'b1;
+assign ms_ready_go    = (is_req) ? data_sram_data_ok : 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go;
 always @(posedge clk) begin

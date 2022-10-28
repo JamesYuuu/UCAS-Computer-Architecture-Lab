@@ -95,8 +95,8 @@ assign mul_result = (inst_mul_w) ? signed_result[31:0] : signed_result[63:32];
 wire [31:0] div_result;
 
 //bob add div part
-reg div_signed_valid;
-reg div_unsigned_valid;
+wire div_signed_valid;
+wire div_unsigned_valid;
 reg div_signed_got;
 reg div_unsigned_got;
 wire div_signed_ready_divisor;
@@ -133,19 +133,17 @@ wire [3:0] wstrb;
 wire is_req;
 assign is_req = data_sram_req;
 
+assign div_signed_valid = (inst_div_w | inst_mod_w) & ~div_signed_got;
+assign div_unsigned_valid = (inst_div_wu | inst_mod_wu) & ~div_unsigned_got;
+
 always @ (posedge clk)
 begin
     if(inst_div_w | inst_mod_w)
     begin
         if(div_signed_ready_divisor && div_signed_ready_dividend)
         begin
-            div_signed_valid <= 0;
             div_signed_got <= 1;
-        end
-        else if(~div_signed_got)
-        begin
-            div_signed_valid <= 1;
-        end        
+        end      
         else if(div_signed_got && div_signed_result_valid)
             div_signed_got <= 0;
     end
@@ -153,20 +151,13 @@ begin
     begin
         if(div_unsigned_ready_divisor && div_unsigned_ready_dividend)
         begin
-            div_unsigned_valid <= 0;
             div_unsigned_got <= 1;
-        end
-        else if(~div_unsigned_got)
-        begin
-            div_unsigned_valid <= 1;
         end
         else if(div_unsigned_got && div_unsigned_result_valid)
             div_unsigned_got <= 0;
     end
     else
     begin
-        div_signed_valid <= 0;
-        div_unsigned_valid <= 0;
         div_signed_got <= 0;
         div_unsigned_got <= 0;
     end
@@ -216,7 +207,7 @@ always @(posedge clk) begin
     end
 end
 
-assign es_ready_go    = ((inst_div_w | inst_mod_w) && (~div_signed_result_valid)) & ~((inst_div_wu | inst_mod_wu) && (~div_unsigned_result_valid)) ? 1'b0:
+assign es_ready_go    = ((inst_div_w | inst_mod_w) && (~(div_signed_result_valid & div_signed_got))) | ((inst_div_wu | inst_mod_wu) && (~(div_unsigned_result_valid & div_unsigned_got))) ? 1'b0:
                         (mem_re || mem_we) ? data_sram_addr_ok : 1'b1;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
