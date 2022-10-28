@@ -24,6 +24,21 @@ module IF_stage(
     input   [31:0]  csr_eentry,
     input   [31:0]  csr_era
 );
+parameter if_empty  = 2'b01;
+parameter if_full   = 2'b10;
+parameter preif_req = 2'b01;
+parameter preif_inst= 2'b10;
+
+reg [1:0] if_current_state;
+reg [1:0] if_next_state;
+reg [1:0] preif_current_state;
+reg [1:0] preif_next_state;
+
+assign inst_sram_wr = 0;
+assign inst_sram_wstrb = 0;
+assign inst_sram_size = 2'b10;
+assign inst_sram_wdata = 0;
+
 // to detech adef
 wire adef_detected;
 
@@ -55,8 +70,8 @@ assign nextpc       =   wb_ex       ? csr_eentry :
 assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
 
 // IF stage
-assign fs_ready_go     = 1'b1;
-assign fs_allowin      = !fs_valid || fs_ready_go && ds_allowin;
+assign fs_ready_go     = (if_current_state[0] & inst_sram_data_ok & ds_allowin) | if_current_state[1];
+assign fs_allowin      = !(fs_valid & fs_ready_go) | fs_ready_go & ds_allowin;
 assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 always @(posedge clk) begin
     if (reset) begin
@@ -70,16 +85,74 @@ always @(posedge clk) begin
     end
 end
 
+always @(posedge clk)
+begin
+    if(reset)
+    begin
+        if_current_state <= if_empty;
+        preif_current_state <= preif_req;
+    end
+    else
+    begin
+        if_current_state <= if_next_state;
+        preif_current_state <= preif_next_state;
+    end
+end
+
+always @(*)
+begin
+    if(if_current_state[0])
+    begin
+        if(~inst_sram_data_ok)
+            if_next_state <= if_empty;
+        else if(inst_sram_data_ok && ds_allowin)
+            if_next_state <= if_empty;
+        else if(inst_sram_data_ok & ~ds_allowin)
+            if_next_state <= if_full;
+    end
+    else// if(if_current_state[1])
+    begin
+        if(ds_allowin)
+            if_next_state <= if_empty;
+        else
+            if_next_state <= if_full;
+    end
+end
+
+always @(*)
+begin
+    if(preif_current_state[0])
+    begin
+        if(inst_sram_addr_ok)
+            preif_next_state <= preif_inst;
+        else
+            preif_next_state <= preif_req;
+    end
+    else if(preif_current_state[1])
+    begin
+        if(inst_sram_data_ok)
+        begin
+            if(inst_sram_req & inst_sram_addr_ok)
+                preif_next_state <= preif_inst;
+            else
+                preif_next_state <= preif_req;
+        end
+        else
+            preif_next_state <= preif_inst;
+    end
+end
+
 // PC update
 always @(posedge clk) begin
     if (reset) begin
         fs_pc <= 32'h1BFFFFFC;  // make nextpc=0x1C000000;
     end
-    else if (fs_allowin) begin
+    else if (fs_allowin & inst_sram_req & inst_sram_addr_ok) begin
         fs_pc <= nextpc;
     end
 end
 
+assign inst_sram_req = fs_allowin & (preif_current_state[0] | (preif_current_state[1] & inst_sram_data_ok & fs_allowin));
 // FIXME: reconstruct inst_sram
 // interface with sram
 assign inst_sram_we     = 4'h0;
