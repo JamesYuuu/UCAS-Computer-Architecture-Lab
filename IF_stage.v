@@ -24,15 +24,19 @@ module IF_stage(
     input   [31:0]  csr_eentry,
     input   [31:0]  csr_era
 );
+
+wire handshake;
+assign handshake = inst_sram_addr_ok & inst_sram_req;
 parameter if_empty  = 2'b01;
 parameter if_full   = 2'b10;
-parameter preif_req = 2'b01;
-parameter preif_inst= 2'b10;
+parameter preif_req = 3'b001;
+parameter preif_inst= 3'b010;
+parameter preif_br_req = 3'b110;
 
 reg [1:0] if_current_state;
 reg [1:0] if_next_state;
-reg [1:0] preif_current_state;
-reg [1:0] preif_next_state;
+reg [2:0] preif_current_state;
+reg [2:0] preif_next_state;
 
 assign inst_sram_wr = 0;
 assign inst_sram_wstrb = 0;
@@ -61,17 +65,30 @@ wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
 assign fs_to_ds_bus = {adef_detected,fs_inst,fs_pc};
 
+reg [31:0]  last_nextpc;
+always @(posedge clk)
+begin
+    if(reset)
+    begin
+        last_nextpc <= 32'h1C000000;
+    end
+    else
+        last_nextpc <= nextpc;
+end
 // pre-IF stage
 assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       =   wb_ex       ? csr_eentry :
                         wb_ertn     ? csr_era   :
+                        preif_current_state[2] ? last_nextpc:
                         br_taken    ? br_target : seq_pc;
 
 assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
 
+
+
 // IF stage
-assign fs_ready_go     = (if_current_state[0] & inst_sram_data_ok & ds_allowin) | if_current_state[1];
-assign fs_allowin      = !(fs_valid & fs_ready_go) | fs_ready_go & ds_allowin;
+assign fs_ready_go     = ~preif_current_state[2] & ((if_current_state[0] & inst_sram_data_ok & ds_allowin) | if_current_state[1]);
+assign fs_allowin      = !(fs_valid & fs_ready_go) | fs_ready_go & ds_allowin | preif_current_state[2];
 assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 always @(posedge clk) begin
     if (reset) begin
@@ -123,22 +140,67 @@ always @(*)
 begin
     if(preif_current_state[0])
     begin
-        if(inst_sram_addr_ok)
+        /*if(handshake)
             preif_next_state <= preif_inst;
         else
-            preif_next_state <= preif_req;
-    end
-    else if(preif_current_state[1])
-    begin
-        if(inst_sram_data_ok)
+            preif_next_state <= preif_req;*/
+        if(~br_taken)
         begin
-            if(inst_sram_req & inst_sram_addr_ok)
+            if(handshake)
                 preif_next_state <= preif_inst;
             else
                 preif_next_state <= preif_req;
         end
-        else
+        else//if(br_taken)
+        begin
+            if(~handshake)
+                preif_next_state <= preif_br_req;
+            else
+                preif_next_state <= preif_inst;
+        end
+    end
+    else if(preif_current_state[1])
+    begin
+        if(~br_taken)
+        begin
+            if(inst_sram_data_ok)
+            begin
+                if(handshake)
+                begin
+                    preif_next_state <= preif_inst;
+                end
+                else
+                begin
+                    preif_next_state <= preif_req;
+                end
+            end
+            else if(~inst_sram_data_ok)
+            begin
+                preif_next_state <= preif_inst;
+            end
+        end
+        else// if(br taken)
+        begin
+            if(handshake)
+            begin
+                preif_next_state <= preif_inst;
+            end
+            else
+            begin
+                preif_next_state <= preif_br_req;
+            end
+        end
+    end
+    else if(preif_current_state[2])
+    begin
+        if(handshake)
+        begin
             preif_next_state <= preif_inst;
+        end
+        else
+        begin
+            preif_next_state <= preif_br_req;
+        end
     end
 end
 
@@ -152,7 +214,7 @@ always @(posedge clk) begin
     end
 end
 
-assign inst_sram_req = fs_allowin & (preif_current_state[0] | (preif_current_state[1] & inst_sram_data_ok & fs_allowin));
+assign inst_sram_req = fs_allowin & (preif_current_state[0] | (preif_current_state[1] & inst_sram_data_ok & fs_allowin) | preif_current_state[2]);
 // FIXME: reconstruct inst_sram
 // interface with sram
 assign inst_sram_we     = 4'h0;
