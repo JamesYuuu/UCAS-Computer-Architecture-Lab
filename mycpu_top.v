@@ -2,17 +2,25 @@ module mycpu_top(
     input  wire        clk,
     input  wire        resetn,
     // inst sram interface
-    output wire        inst_sram_en,
-    output wire [3:0]  inst_sram_we,
-    output wire [31:0] inst_sram_addr,
-    output wire [31:0] inst_sram_wdata,
-    input  wire [31:0] inst_sram_rdata,
+    output inst_sram_req,
+    output inst_sram_wr,
+    output [1:0] inst_sram_size,
+    output [3:0] inst_sram_wstrb,
+    output [31:0] inst_sram_addr,
+    output [31:0] inst_sram_wdata,
+    input inst_sram_addr_ok,
+    input inst_sram_data_ok,
+    input [31:0] inst_sram_rdata,
     // data sram interface
-    output wire        data_sram_en,
-    output wire [3:0]  data_sram_we,
-    output wire [31:0] data_sram_addr,
-    output wire [31:0] data_sram_wdata,
-    input  wire [31:0] data_sram_rdata,
+    output data_sram_req,
+    output data_sram_wr,
+    output [1:0] data_sram_size,
+    output [3:0] data_sram_wstrb,
+    output [31:0] data_sram_addr,
+    output [31:0] data_sram_wdata,
+    input data_sram_addr_ok,
+    input data_sram_data_ok,
+    input [31:0] data_sram_rdata,
     // trace debug interface
     output wire [31:0] debug_wb_pc,
     output wire [ 3:0] debug_wb_rf_we,
@@ -32,8 +40,8 @@ wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
 wire [64:0]  fs_to_ds_bus;
-wire [204:0] ds_to_es_bus;
-wire [211:0] es_to_ms_bus;
+wire [208:0] ds_to_es_bus;
+wire [212:0] es_to_ms_bus;
 wire [205:0] ms_to_ws_bus;
 wire [38:0]  rf_bus;
 wire [33:0]  br_bus;
@@ -60,10 +68,14 @@ IF_stage IF_stage(
     .fs_to_ds_valid (fs_to_ds_valid ),
     .fs_to_ds_bus   (fs_to_ds_bus   ),
     // inst sram interface
-    .inst_sram_en   (inst_sram_en   ),
-    .inst_sram_we   (inst_sram_we  ),
+    .inst_sram_req  (inst_sram_req  ),
+    .inst_sram_wr   (inst_sram_wr   ),
+    .inst_sram_size (inst_sram_size ),
+    .inst_sram_wstrb(inst_sram_wstrb),
     .inst_sram_addr (inst_sram_addr ),
     .inst_sram_wdata(inst_sram_wdata),
+    .inst_sram_addr_ok(inst_sram_addr_ok),
+    .inst_sram_data_ok(inst_sram_data_ok),
     .inst_sram_rdata(inst_sram_rdata),
     // interrupt signal
     .wb_ex          (wb_ex          ),
@@ -112,10 +124,13 @@ EXE_stage EXE_stage(
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
     // data sram interface
-    .data_sram_en   (data_sram_en   ),
-    .data_sram_we   (data_sram_we   ),
+    .data_sram_req  (data_sram_req  ),
+    .data_sram_wr   (data_sram_wr   ),
+    .data_sram_size (data_sram_size ),
+    .data_sram_wstrb(data_sram_wstrb),
     .data_sram_addr (data_sram_addr ),
     .data_sram_wdata(data_sram_wdata),
+    .data_sram_addr_ok(data_sram_addr_ok),
     // output es_to_ds_bus to ID stage
     .out_es_valid   (out_es_valid   ),
     // interrupt signal
@@ -139,6 +154,7 @@ MEM_stage MEM_stage(
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
     //from data-sram
+    .data_sram_data_ok(data_sram_data_ok),
     .data_sram_rdata(data_sram_rdata),
     // output ms_to_ds_bus for ID stage
     .out_ms_valid   (out_ms_valid   ),
