@@ -464,7 +464,7 @@ assign br_target = (br_con || br_uncon) ? (ds_pc + br_offs) : /*inst_jirl*/ (rj_
 // deal with input and output
 wire prev_exception_op;
 
-assign br_stall = es_valid && es_res_from_mem && need_si16;
+assign br_stall = !ds_ready_go && br_con;
 assign br_bus = {br_stall,br_taken_cancel,br_taken,br_target};
 assign {prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
 

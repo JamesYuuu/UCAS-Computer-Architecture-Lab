@@ -46,10 +46,13 @@ reg [31:0] nextpc_r;
 wire [31:0] nextpc;
 
 // signals from branch
+wire        br_taken_ori;
 wire        br_taken;
 wire [31:0] br_target;
 wire        br_taken_cancel;
-assign {br_stall,br_taken_cancel,br_taken,br_target} = br_bus;
+assign {br_stall,br_taken_cancel,br_taken_ori,br_target} = br_bus;
+
+assign br_taken = br_taken_ori && !br_stall;
 
 // signals to output for ID_stage
 wire [31:0] fs_inst;
