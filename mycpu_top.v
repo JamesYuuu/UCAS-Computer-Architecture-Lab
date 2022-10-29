@@ -31,7 +31,6 @@ module mycpu_top(
 wire         reset;
 assign reset = ~resetn;
 
-wire         fs_allowin;
 wire         ds_allowin;
 wire         es_allowin;
 wire         ms_allowin;
@@ -40,7 +39,6 @@ wire         fs_to_ds_valid;
 wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
-wire [33:0]  to_fs_bus;
 wire [64:0]  fs_to_ds_bus;
 wire [208:0] ds_to_es_bus;
 wire [213:0] es_to_ms_bus;
@@ -58,16 +56,17 @@ wire [31:0]  csr_era;
 wire         has_int;
 wire [63:0]  stable_counter_value;
 
-// preIF stage
-preIF_stage preIF_stage(
+// IF stage
+IF_stage IF_stage(
     .clk            (clk            ),
     .reset          (reset          ),
-    .fs_allowin     (fs_allowin     ),
+    // allowin from ID stage
+    .ds_allowin     (ds_allowin     ),
     // branch bus
     .br_bus         (br_bus         ),
-    // output to IF stage
-    .to_fs_valid    (to_fs_valid    ),
-    .to_fs_bus      (to_fs_bus      ),
+    // output to ID stage
+    .fs_to_ds_valid (fs_to_ds_valid ),
+    .fs_to_ds_bus   (fs_to_ds_bus   ),
     // inst sram interface
     .inst_sram_req  (inst_sram_req  ),
     .inst_sram_wr   (inst_sram_wr   ),
@@ -76,28 +75,13 @@ preIF_stage preIF_stage(
     .inst_sram_addr (inst_sram_addr ),
     .inst_sram_wdata(inst_sram_wdata),
     .inst_sram_addr_ok(inst_sram_addr_ok),
+    .inst_sram_data_ok(inst_sram_data_ok),
+    .inst_sram_rdata(inst_sram_rdata),
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .csr_era        (csr_era        ),
     .csr_eentry     (csr_eentry     )
-);
-// IF stage
-IF_stage IF_stage(
-    .clk            (clk            ),
-    .reset          (reset          ),
-    // allowin from ID stage
-    .ds_allowin     (ds_allowin     ),
-    .fs_allowin     (fs_allowin     ),
-    // output to ID stage
-    .fs_to_ds_valid (fs_to_ds_valid ),
-    .fs_to_ds_bus   (fs_to_ds_bus   ),
-    // input to IF stage
-    .to_fs_valid    (to_fs_valid    ),
-    .to_fs_bus      (to_fs_bus      ),
-    // inst sram interface
-    .inst_sram_data_ok(inst_sram_data_ok),
-    .inst_sram_rdata(inst_sram_rdata)
 );
 // ID stage
 ID_stage ID_stage(

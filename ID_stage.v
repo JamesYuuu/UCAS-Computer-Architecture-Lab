@@ -38,6 +38,7 @@ wire [31:0] ds_inst;
 wire        br_taken;
 wire [31:0] br_target;
 wire        br_taken_cancel;
+wire        br_stall;
 
 wire [11:0] alu_op;
 wire        src1_is_pc;
@@ -462,7 +463,7 @@ assign br_taken = (   inst_beq  &&  rj_eq_rd
 assign br_target = (br_con || br_uncon) ? (ds_pc + br_offs) : /*inst_jirl*/ (rj_value + jirl_offs);
 // deal with input and output
 wire prev_exception_op;
-assign br_bus = {br_taken_cancel,br_taken,br_target};
+assign br_bus = {br_stall,br_taken,br_target};
 assign {prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
 
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
@@ -483,6 +484,10 @@ assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid)
 assign ds_allowin       = !ds_valid || wb_ex || wb_ertn || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
+
+// add br_stall
+assign br_stall = es_valid && es_res_from_mem && need_si16;
+
 always @(posedge clk) begin
     if (reset) begin
         ds_valid <=1'b0;
