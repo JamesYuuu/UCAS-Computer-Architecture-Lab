@@ -6,10 +6,10 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [212:0]    es_to_ms_bus,
+    input   wire [213:0]    es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
-    output  wire [205:0]    ms_to_ws_bus,
+    output  wire [206:0]    ms_to_ws_bus,
     // data sram interface
     input   wire [31:0]     data_sram_rdata,     // read data
     input                   data_sram_data_ok,   // if data has been written or given back
@@ -33,9 +33,10 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg [212:0] es_to_ms_bus_r;
+reg [213:0] es_to_ms_bus_r;
 wire        ds_has_int;
-wire        is_req;
+wire        mem_re;
+wire        mem_we;
 
 // add ld op
 wire [4:0] ld_op;
@@ -47,7 +48,7 @@ wire       inst_ld_w;
 
 assign {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w}=ld_op;
 
-assign ms_ready_go    = (is_req) ? data_sram_data_ok : 1'b1;
+assign ms_ready_go    = (mem_we | mem_re) ? data_sram_data_ok : 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go;
 always @(posedge clk) begin
@@ -72,8 +73,8 @@ wire [31:0] data_sram_addr_error;
 wire [3:0]  exception_op;
 
 wire inst_rdcntid;
-assign {is_req,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
-assign ms_to_ws_bus={inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
+assign {mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
+assign ms_to_ws_bus={mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
 assign mem_ex = csr_data[29] | exception_op[3] | exception_op[2] | exception_op[1] | exception_op[0];       // note that csr_data[29] means inst_syscall
 assign mem_ertn = csr_data[30];                                                                             // note that csr_data[30] means inst_ertn
@@ -103,6 +104,6 @@ assign mem_result   =   inst_ld_b   ? ld_b_result :
                         inst_ld_hu  ? ld_hu_result: data_sram_rdata;
 assign final_result = res_from_mem ? mem_result : alu_result;
 
-assign out_ms_valid = ms_to_ws_valid;
+assign out_ms_valid = ms_valid;
 
 endmodule

@@ -132,32 +132,7 @@ assign inst_sram_wdata  = 32'b0;
 
 assign fs_inst          = inst_sram_rdata;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// add FSM
 assign handshake = inst_sram_req & inst_sram_addr_ok;
 reg prev_handshake;
 always @(posedge clk)

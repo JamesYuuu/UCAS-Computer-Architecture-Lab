@@ -9,7 +9,7 @@ module EXE_stage(
     input   [204:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [212:0]     es_to_ms_bus,
+    output  [213:0]     es_to_ms_bus,
     // data sram interface
     output          data_sram_req,       // if there is a request
     output          data_sram_wr,        // read or write    1 means write and 0 means read
@@ -230,7 +230,7 @@ wire inst_rdcntvl_w;
 wire        ds_has_int;
 assign next_exception_op = {prev_exception_op,ale_detected};
 assign {inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {is_req,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign es_to_ms_bus = {mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 assign inst_rdcntid = inst_stable_counter[2];
 assign inst_rdcntvh_w = inst_stable_counter[1];

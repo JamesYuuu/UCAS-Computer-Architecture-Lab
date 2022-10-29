@@ -41,8 +41,8 @@ wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
 wire [64:0]  fs_to_ds_bus;
 wire [208:0] ds_to_es_bus;
-wire [212:0] es_to_ms_bus;
-wire [205:0] ms_to_ws_bus;
+wire [213:0] es_to_ms_bus;
+wire [206:0] ms_to_ws_bus;
 wire [38:0]  rf_bus;
 wire [33:0]  br_bus;
 wire         out_ms_valid;
@@ -105,6 +105,7 @@ ID_stage ID_stage(
     .out_ms_valid   (out_ms_valid   ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
     .es_to_ms_bus   (es_to_ms_bus   ),
+    .ms_to_ws_valid (ms_to_ws_valid ),
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),

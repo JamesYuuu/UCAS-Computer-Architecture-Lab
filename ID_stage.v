@@ -17,8 +17,9 @@ module ID_stage(
     // input for hazard
     input           out_ms_valid,
     input           out_es_valid,
-    input   [205:0] ms_to_ws_bus,
-    input   [211:0] es_to_ms_bus,
+    input           ms_to_ws_valid,
+    input   [206:0] ms_to_ws_bus,
+    input   [213:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
@@ -121,6 +122,7 @@ wire        ms_valid;
 wire        es_valid;
 wire        ws_valid;
 wire        es_res_from_mem;
+wire        ms_ld;
 wire [31:0] es_result;
 wire [31:0] ms_result;
 
@@ -477,7 +479,7 @@ assign inst_stable_counter       = {inst_rdcntid, inst_rdcntvh_w, inst_rdcntvl_w
 assign ds_to_es_bus              = {inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
-assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid));
+assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || ((ms_ld || ms_csr) && ms_valid));
 assign ds_allowin       = !ds_valid || wb_ex || wb_ertn || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 assign br_taken_cancel  = br_taken && ds_ready_go;
@@ -507,6 +509,7 @@ assign es_valid = out_es_valid;
 
 assign {es_res_from_mem,es_we,es_addr,es_result} = es_to_ms_bus[70:32];
 assign {ms_we,ms_addr,ms_result} = ms_to_ws_bus[69:32];
+assign ms_ld = ms_to_ws_bus[206];
 
 // read after write hazard
 assign src1_hazard = (rf_raddr1 == 5'b0) ? 1'b0:
@@ -543,13 +546,13 @@ assign      ms_csr = ms_inst_csrwr || ms_inst_csrxchg || ms_inst_csrrd || ms_ins
 
 // data forward
 assign rj_value  = (rf_raddr1 == 5'b0) ? 32'b0:
-                   (rf_raddr1 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
-                   (rf_raddr1 == ms_addr && ms_we && out_ms_valid)? ms_result:
+                   (rf_raddr1 == es_addr && es_we && !es_res_from_mem && es_valid)? es_result :
+                   (rf_raddr1 == ms_addr && ms_we && ms_to_ws_valid)? ms_result:
                    (rf_raddr1 == rf_waddr && rf_we && ws_valid)? rf_wdata : rf_rdata1;
 
 assign rkd_value = (rf_raddr2 == 5'b0) ? 32'b0:
-                   (rf_raddr2 == es_addr && es_we && !es_res_from_mem && out_es_valid)? es_result :
-                   (rf_raddr2 == ms_addr && ms_we && out_ms_valid)? ms_result:
+                   (rf_raddr2 == es_addr && es_we && !es_res_from_mem && es_valid)? es_result :
+                   (rf_raddr2 == ms_addr && ms_we && ms_to_ws_valid)? ms_result:
                    (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
 
 endmodule
