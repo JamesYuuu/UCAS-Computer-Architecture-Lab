@@ -25,7 +25,8 @@ module EXE_stage(
     input               mem_ex,
     input               wb_ertn,
     input               mem_ertn,
-    input [63:0]        stable_counter_value
+    input [63:0]        stable_counter_value,
+    output              es_ex
 );
 
 wire ale_detected;
@@ -277,4 +278,5 @@ assign data_sram_size  = size;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 
 
+assign es_ex = ale_detected | next_exception_op[0] | next_exception_op[1] | next_exception_op[2] | next_exception_op[3] | csr_data[30];
 endmodule

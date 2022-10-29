@@ -22,8 +22,13 @@ module IF_stage(
     input           wb_ex,
     input           wb_ertn,
     input   [31:0]  csr_eentry,
-    input   [31:0]  csr_era
+    input   [31:0]  csr_era,
+    input           ds_ex,
+    input           es_ex,
+    input           ms_ex,
+    input           ms_ertn
 );
+wire after_ex = wb_ex | wb_ertn | ds_ex | es_ex | ms_ex | ms_ertn;
 wire handshake;
 reg [5:0] preif_current_state;
 reg [5:0] preif_next_state;
@@ -126,7 +131,7 @@ begin
 end
 
 // interface with sram
-assign inst_sram_req    = fs_allowin & (preif_current_state[0] | preif_current_state[1] & inst_sram_data_ok | preif_current_state[3] | preif_current_state[4] | preif_current_state[5] & inst_sram_data_ok);
+assign inst_sram_req    = ~after_ex & fs_allowin & (preif_current_state[0] | preif_current_state[1] & inst_sram_data_ok | preif_current_state[3] | preif_current_state[4] | preif_current_state[5] & inst_sram_data_ok);
 assign inst_sram_addr   = nextpc;
 assign inst_sram_wr     = 1'b0;
 assign inst_sram_wstrb  = 4'b0;

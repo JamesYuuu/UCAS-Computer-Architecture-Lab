@@ -23,7 +23,8 @@ module ID_stage(
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
-    input           has_int
+    input           has_int,
+    output          ds_ex
 );
 
 wire        ine_detected;
@@ -558,4 +559,5 @@ assign rkd_value = (rf_raddr2 == 5'b0) ? 32'b0:
                    (rf_raddr2 == ms_addr && ms_we && ms_to_ws_valid)? ms_result:
                    (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
 
+assign ds_ex = inst_break | inst_ertn | inst_syscall | prev_exception_op | ine_detected;
 endmodule
