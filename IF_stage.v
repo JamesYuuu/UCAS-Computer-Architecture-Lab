@@ -162,7 +162,7 @@ always @(*)
 begin
 	if(preif_current_state[0])
     begin
-        if(br_taken)
+        if(br_taken | wb_ex | wb_ertn)
         begin
             if(handshake)
             begin
@@ -187,7 +187,7 @@ begin
     end
     else if(preif_current_state[1])
     begin
-        if(br_taken)
+        if(br_taken | wb_ex | wb_ertn)
         begin
             if(~inst_sram_data_ok & (handshake | prev_handshake))
             begin
