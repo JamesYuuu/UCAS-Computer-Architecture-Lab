@@ -134,10 +134,10 @@ always @(posedge clk) begin
     if (reset) begin
         br_taken_buf <= 1'b0;
     end
-    else if (br_taken_buf && pre_fs_ready_go && fs_allowin) begin
+    else if (br_taken_buf && to_fs_valid && fs_allowin) begin
         br_taken_buf <= 1'b0;
     end
-    else if (br_taken && ~br_stall && ~pre_fs_ready_go) begin
+    else if (br_taken && ~br_stall && ~to_fs_valid) begin
         br_taken_buf <= br_taken;
     end
 end
