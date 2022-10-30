@@ -246,7 +246,7 @@ begin
             end
         end
     end
-    else if(preif_current_state[2])
+    else if(preif_current_state[2])    // s2 跳转的时候 握手
     begin
         if(inst_sram_data_ok & ~handshake)
         begin
@@ -261,7 +261,7 @@ begin
             preif_next_state <= s2;
         end
     end
-    else if(preif_current_state[3])
+    else if(preif_current_state[3])   //s3 跳转的时候 没握手
     begin
         if(handshake)
         begin
@@ -272,7 +272,7 @@ begin
             preif_next_state <= s3;
         end
     end
-    else if(preif_current_state[4])
+    else if(preif_current_state[4])   //s4 无效指令获得 有效指令未握手 
     begin
         if(handshake)
         begin
@@ -283,9 +283,27 @@ begin
             preif_next_state <= s4;
         end
     end
-    else if(preif_current_state[5])
+    else if(preif_current_state[5])  //s5 无效指令获得 有效指令握手
     begin
-        if(inst_sram_data_ok)
+        // when wb_ex come in 
+        if (wb_ertn || wb_ex)
+        begin
+            if (inst_sram_data_ok)
+            begin
+                if (handshake)
+                begin
+                    preif_next_state <= s5;
+                end
+                else
+                begin
+                    preif_next_state <= s4;
+                end
+            end
+            else begin
+                preif_next_state <= s6;
+            end
+        end 
+        else if(inst_sram_data_ok)
         begin
             if(handshake)
                 preif_next_state <= s1;
