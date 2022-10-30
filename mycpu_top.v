@@ -55,8 +55,6 @@ wire [31:0]  csr_eentry;
 wire [31:0]  csr_era;
 wire         has_int;
 wire [63:0]  stable_counter_value;
-wire ds_ex;
-wire es_ex;
 
 // IF stage
 IF_stage IF_stage(
@@ -83,11 +81,7 @@ IF_stage IF_stage(
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .csr_era        (csr_era        ),
-    .csr_eentry     (csr_eentry     ),
-    .ds_ex          (ds_ex          ),
-    .es_ex          (es_ex          ),
-    .ms_ex          (mem_ex         ),
-    .ms_ertn        (mem_ertn       )
+    .csr_eentry     (csr_eentry     )
 );
 // ID stage
 ID_stage ID_stage(
@@ -115,8 +109,7 @@ ID_stage ID_stage(
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
-    .has_int        (has_int        ),
-    .ds_ex          (ds_ex          )
+    .has_int        (has_int        )
 );
 // EXE stage
 EXE_stage EXE_stage(
@@ -146,8 +139,7 @@ EXE_stage EXE_stage(
     .wb_ertn        (wb_ertn        ),
     .mem_ex         (mem_ex         ),
     .mem_ertn       (mem_ertn       ),
-    .stable_counter_value(stable_counter_value),
-    .es_ex          (es_ex          )
+    .stable_counter_value(stable_counter_value)
 );
 // MEM stage
 MEM_stage MEM_stage(
