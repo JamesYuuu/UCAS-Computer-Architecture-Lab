@@ -198,7 +198,7 @@ begin
             end
         end
     end
-    else if(preif_current_state[1])
+    else if(preif_current_state[1])   // s1等待指令
     begin
         if (wb_ertn || wb_ex) 
         begin
