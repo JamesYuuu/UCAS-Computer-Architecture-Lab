@@ -270,10 +270,9 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
                (size==2'b10 && addr==2'b00) ? 4'b1111: 4'b0000;
 
 // data sram interface
-assign data_sram_req   = (after_ertn || after_ex || ale_detected) ? 1'b0:
-                         ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 : 1'b0;
+assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 : 1'b0;
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
-assign data_sram_wstrb = wstrb;
+assign data_sram_wstrb = (after_ex || after_ertn || ale_detected) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 

@@ -110,7 +110,7 @@ assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_d
 assign wb_ertn = inst_ertn & ws_valid;
 
 assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn | inst_rdcntid;
-assign csr_we = inst_csrwr | inst_csrxchg;
+assign csr_we = (inst_csrwr | inst_csrxchg) & ws_valid;
 assign csr_wmask =  inst_csrwr ? 32'hffffffff :
                     inst_csrxchg ? rj_value : 32'b0;
 assign csr_wvalue = (inst_csrwr | inst_csrxchg) ? rkd_value : 32'b0;
