@@ -25,8 +25,8 @@ module IF_stage(
     input   [31:0]  csr_era
 );
 wire handshake;
-reg [6:0] preif_current_state;
-reg [6:0] preif_next_state;
+reg [5:0] preif_current_state;
+reg [5:0] preif_next_state;
 
 // instruction buffer
 reg [31:0] inst_buff;
@@ -71,7 +71,6 @@ assign nextpc       =   wb_ex       ? csr_eentry :
                         preif_current_state[2] ? nextpc_r :
                         preif_current_state[3] ? nextpc_r :
                         preif_current_state[4] ? nextpc_r :
-                        preif_current_state[6] ? nextpc_r :
                         br_taken    ? br_target : seq_pc;
 
 assign pre_fs_ready_go = (inst_sram_req && inst_sram_addr_ok);
@@ -79,7 +78,7 @@ assign pre_fs_ready_go = (inst_sram_req && inst_sram_addr_ok);
 assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
 
 // IF stage
-assign fs_ready_go     = ~preif_current_state[6] & preif_current_state[1] & inst_sram_data_ok | preif_current_state[5] & inst_sram_data_ok | inst_buff_valid;
+assign fs_ready_go     = preif_current_state[1] & inst_sram_data_ok | preif_current_state[5] & inst_sram_data_ok | inst_buff_valid;
 assign fs_allowin     = !(fs_valid & ~preif_current_state[2] & ~preif_current_state[3] & ~preif_current_state[4]) || fs_ready_go && ds_allowin;
 assign fs_to_ds_valid  = fs_valid && fs_ready_go;
 always @(posedge clk) begin
@@ -144,13 +143,12 @@ begin
     prev_handshake <= handshake;
 end
 
-parameter s0 = 7'b0000001;
-parameter s1 = 7'b0000010;
-parameter s2 = 7'b0000100;
-parameter s3 = 7'b0001000;
-parameter s4 = 7'b0010000;
-parameter s5 = 7'b0100000;
-parameter s6 = 7'b1000000;
+parameter s0 = 6'b000001;
+parameter s1 = 6'b000010;
+parameter s2 = 6'b000100;
+parameter s3 = 6'b001000;
+parameter s4 = 6'b010000;
+parameter s5 = 6'b100000;
 
 always @(posedge clk)
 begin
@@ -164,18 +162,7 @@ always @(*)
 begin
 	if(preif_current_state[0])        // s0等待握手
     begin
-        if (wb_ertn || wb_ex)
-        begin
-            if (handshake)
-            begin
-                preif_next_state <= s6;
-            end
-            else
-            begin
-                preif_next_state <= s3;
-            end
-        end
-        else if(br_taken)
+        if(br_taken || wb_ertn || wb_ex)
         begin
             if(handshake)
             begin
@@ -204,7 +191,7 @@ begin
         begin
             if (~inst_sram_data_ok) 
             begin
-                preif_next_state <= s6;
+                preif_next_state <= s2;
             end
             else if (handshake)
             begin
@@ -248,25 +235,7 @@ begin
     end
     else if(preif_current_state[2])    // s2 跳转的时候 握手
     begin
-        if (wb_ex || wb_ertn)
-        begin
-            if (inst_sram_data_ok)
-            begin
-                if (handshake)
-                begin
-                    preif_next_state <= s6;
-                end
-                else
-                begin
-                    preif_next_state <= s4;
-                end
-            end
-            else 
-            begin
-                preif_next_state <=s6;
-            end
-        end
-        else if(inst_sram_data_ok & ~handshake)
+        if(inst_sram_data_ok & ~handshake)
         begin
             preif_next_state <= s4;
         end
@@ -285,7 +254,7 @@ begin
         begin
             if (handshake)
             begin
-                preif_next_state <=s6;
+                preif_next_state <=s2;
             end
             else 
             begin
@@ -306,7 +275,7 @@ begin
         if (wb_ertn || wb_ex) 
         begin
             if (handshake) begin
-                preif_next_state <= s6;
+                preif_next_state <= s2;
             end
             else begin
                 preif_next_state <= s4;
@@ -338,7 +307,7 @@ begin
                 end
             end
             else begin
-                preif_next_state <= s6;
+                preif_next_state <= s2;
             end
         end 
         else if(inst_sram_data_ok)
@@ -351,23 +320,6 @@ begin
         else
         begin
             preif_next_state <= s5;
-        end
-    end
-    else if (preif_current_state[6])
-    begin
-        if (inst_sram_data_ok) 
-        begin
-            if (handshake)
-            begin
-                preif_next_state <= s5; 
-            end
-            else 
-            begin
-                preif_next_state <= s4;
-            end
-        end
-        else begin
-            preif_next_state <= s6;
         end
     end
 end
