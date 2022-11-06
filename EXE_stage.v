@@ -136,6 +136,9 @@ assign is_req = data_sram_req;
 assign div_signed_valid = (inst_div_w | inst_mod_w) & ~div_signed_got;
 assign div_unsigned_valid = (inst_div_wu | inst_mod_wu) & ~div_unsigned_got;
 
+reg signed_result_valid;
+reg unsigned_result_valid;
+
 always @ (posedge clk)
 begin
     if(inst_div_w | inst_mod_w)
@@ -144,8 +147,8 @@ begin
         begin
             div_signed_got <= 1;
         end      
-        else if(div_signed_got && div_signed_result_valid)
-            div_signed_got <= 0;
+        //else if(div_signed_got && div_signed_result_valid)
+        //    div_signed_got <= 0;
     end
     else if(inst_div_wu | inst_mod_wu)
     begin
@@ -153,11 +156,13 @@ begin
         begin
             div_unsigned_got <= 1;
         end
-        else if(div_unsigned_got && div_unsigned_result_valid)
-            div_unsigned_got <= 0;
+        //else if(div_unsigned_got && div_unsigned_result_valid)
+        //    div_unsigned_got <= 0;
     end
     else
     begin
+        signed_result_valid <= 0;
+        unsigned_result_valid <= 0;
         div_signed_got <= 0;
         div_unsigned_got <= 0;
     end

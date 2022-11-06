@@ -493,9 +493,6 @@ always @(posedge clk) begin
     else if(wb_ex | wb_ertn) begin
         ds_valid <= 1'b0;
     end
-    else if (br_taken_cancel) begin
-        ds_valid <=1'b0;
-    end
     else if (ds_allowin) begin
         ds_valid <= fs_to_ds_valid;
     end
