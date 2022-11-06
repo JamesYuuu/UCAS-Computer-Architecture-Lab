@@ -47,7 +47,7 @@ module mycpu_top(
 
     // trace debug interface
     output [31:0] debug_wb_pc,
-    output [3:0]  debug_wb_rf_wen,
+    output [3:0]  debug_wb_rf_we,
     output [4:0]  debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
 );
@@ -143,7 +143,7 @@ axi_bridge axi_bridge(
     .data_sram_wr      (data_sram_wr     )
 );
 
-cpu_core cpu_core(
+mycpu_core mycpu_core(
     .clk               (clk              ),
     .resetn            (resetn           ),
     // inst sram interface
@@ -168,7 +168,7 @@ cpu_core cpu_core(
     .data_sram_wr      (data_sram_wr     ),
     // trace debug interface
     .debug_wb_pc       (debug_wb_pc      ),
-    .debug_wb_rf_wen   (debug_wb_rf_wen  ),
+    .debug_wb_rf_we    (debug_wb_rf_we   ),
     .debug_wb_rf_wnum  (debug_wb_rf_wnum ),
     .debug_wb_rf_wdata (debug_wb_rf_wdata)
 );
