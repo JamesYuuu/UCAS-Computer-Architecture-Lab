@@ -46,7 +46,6 @@ wire        src2_is_imm;
 wire        res_from_mem;
 wire        dst_is_r1;
 wire        gr_we;
-wire [3: 0] mem_we;
 wire        src_reg_is_rd;
 wire [4: 0] dest;
 wire [31:0] rj_value;
