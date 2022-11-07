@@ -247,7 +247,7 @@ begin
     end
 end
 
-// control two handshakes for data wrtie
+// control two handshakes for data write
 reg  addr_handshake;
 reg  data_handshake;
 always @(posedge aclk)
