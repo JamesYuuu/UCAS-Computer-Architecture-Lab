@@ -44,7 +44,7 @@ wire [208:0] ds_to_es_bus;
 wire [213:0] es_to_ms_bus;
 wire [206:0] ms_to_ws_bus;
 wire [38:0]  rf_bus;
-wire [34:0]  br_bus;
+wire [33:0]  br_bus;
 wire         out_ms_valid;
 wire         out_es_valid;
 wire         wb_ex;

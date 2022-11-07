@@ -4,7 +4,7 @@ module IF_stage(
     // allowin from ID stage
     input           ds_allowin,
     // branch bus
-    input   [34:0]  br_bus,
+    input   [33:0]  br_bus,
     // output to ID stage
     output          fs_to_ds_valid,
     output  [64:0]  fs_to_ds_bus,
@@ -55,8 +55,7 @@ wire [31:0] nextpc;
 wire        br_taken_ori;
 wire        br_taken;
 wire [31:0] br_target;
-wire        br_taken_cancel;
-assign {br_stall,br_taken_cancel,br_taken_ori,br_target} = br_bus;
+assign {br_stall,br_taken_ori,br_target} = br_bus;
 
 assign br_taken = br_taken_ori && ~br_stall;
 
@@ -77,17 +76,34 @@ begin
     if (reset)
     begin
         inst_buff <= 32'b0;
-        inst_buff_valid <= 1'b0;
     end
-    else if (!ds_allowin & fs_ready_go)
+    else if (inst_sram_data_ok)
     begin
         inst_buff <= inst_sram_rdata;
+    end
+    else 
+    begin
+        inst_buff <= inst_buff;
+    end
+end
+
+always @(posedge clk)
+begin
+    if (reset)
+    begin
+       inst_buff_valid <= 1'b0;
+    end
+    else if (ds_allowin)
+    begin
+        inst_buff_valid <= 1'b0;
+    end
+    else if (fs_ready_go & inst_sram_data_ok)           // ~ds_allowin
+    begin
         inst_buff_valid <= 1'b1;
     end
-    else
+    else 
     begin
-        inst_buff <= 32'b0;
-        inst_buff_valid <= 1'b0;
+        inst_buff_valid <= inst_buff_valid;
     end
 end
     
@@ -110,9 +126,6 @@ always @(posedge clk) begin
     end
     else if (fs_allowin) begin
         fs_valid <= pre_fs_ready_go;
-    end
-    else if (br_taken_cancel) begin
-        fs_valid <= 1'b0;
     end
 end
 
