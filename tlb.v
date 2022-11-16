@@ -133,7 +133,7 @@ genvar j;
             begin
                 if (we && w_index==j)
                 begin
-                    tlb_e[j]     <= w_e && ~(inv_match[j] && invtlb_valid);
+                    tlb_e[j]     <= w_e && ~(inv_match[j] && invtlb_valid);  // besides being sent invalid
                     tlb_ps4MB[j] <= (w_ps == 6'd22);
                     tlb_vppn[j]  <= w_vppn;
                     tlb_asid[j]  <= w_asid;
