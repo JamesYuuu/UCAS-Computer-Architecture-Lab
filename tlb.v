@@ -150,7 +150,7 @@ genvar j;
                     tlb_v1[j]    <= w_v1;
                 end               
             end
-
+            // tlb invalid
             always @(posedge clk)
             begin
                 if (inv_match[j] && invtlb_valid)
