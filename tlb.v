@@ -100,7 +100,7 @@ wire              inv_match  [TLBNUM-1:0];
 
 // search port 1
 
-// search port 2s
+// search port 2
 
 // read port
 assign r_e      = tlb_e[r_index]; 
