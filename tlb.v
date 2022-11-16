@@ -116,7 +116,7 @@ genvar i;
             assign cond4[i] = (s1_vppn[18:10] == tlb_vppn[i][18:10])
                             && (tlb_ps4MB[i] || s1_vppn[9:0] == tlb_vppn[i][9:0]);
 
-            assign inv_match[i] = (invtlb_op == 5'd0 || invtlb_op == 1) && (cond1[i] || cond2[i])
+            assign inv_match[i] = (invtlb_op == 5'd0 || invtlb_op == 5'd1) && (cond1[i] || cond2[i])
                                || (invtlb_op == 5'd4) && (cond1[i] && cond3[i])
                                || (invtlb_op == 5'd5) && (cond1[i] && cond3[i] && cond4[i])
                                || (invtlb_op == 5'd6) && ((cond2[i] || cond3[i]) && cond4[i]);
@@ -150,7 +150,7 @@ genvar j;
                     tlb_v1[j]    <= w_v1;
                 end               
             end
-            // tlb invalid
+            // set tlb invalid
             always @(posedge clk)
             begin
                 if (inv_match[j] && invtlb_valid)
