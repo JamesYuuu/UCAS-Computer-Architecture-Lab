@@ -133,7 +133,7 @@ genvar j;
             begin
                 if (we && w_index==j)
                 begin
-                    tlb_e[j]     <= w_e;
+                    tlb_e[j]     <= w_e && ~(inv_match[j] && invtlb_valid);
                     tlb_ps4MB[j] <= (w_ps == 6'd22);
                     tlb_vppn[j]  <= w_vppn;
                     tlb_asid[j]  <= w_asid;
@@ -149,14 +149,6 @@ genvar j;
                     tlb_d1[j]    <= w_d1;
                     tlb_v1[j]    <= w_v1;
                 end               
-            end
-            // set tlb invalid
-            always @(posedge clk)
-            begin
-                if (inv_match[j] && invtlb_valid)
-                begin
-                    tlb_e[j]     <= 1'b0;
-                end
             end
         end
     endgenerate
