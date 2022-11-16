@@ -166,7 +166,22 @@ wire   s0_odd;
 assign s0_odd   = tlb_ps4MB[s0_index] ? s0_vppn[9] : s0_va_bit12;
 
 assign s0_found = (match0 != 16'b0);
-assign s0_index = (s0_found) ? $clog2(match0) : 4'd0;
+assign s0_index = (match0[0]) ? 4'd0 :
+                  (match0[1]) ? 4'd1 :
+                  (match0[2]) ? 4'd2 :
+                  (match0[3]) ? 4'd3 :
+                  (match0[4]) ? 4'd4 :
+                  (match0[5]) ? 4'd5 :
+                  (match0[6]) ? 4'd6 :
+                  (match0[7]) ? 4'd7 :
+                  (match0[8]) ? 4'd8 :
+                  (match0[9]) ? 4'd9 :
+                  (match0[10]) ? 4'd10 :
+                  (match0[11]) ? 4'd11 :
+                  (match0[12]) ? 4'd12 :
+                  (match0[13]) ? 4'd13 :
+                  (match0[14]) ? 4'd14 :
+                  (match0[15]) ? 4'd15 : 4'd0;
 assign s0_ppn   = (s0_odd) ? tlb_ppn1[s0_index] : tlb_ppn0[s0_index];
 assign s0_ps    = (tlb_ps4MB[s0_index]) ? 6'd22 : 6'd12;
 assign s0_plv   = (s0_odd) ? tlb_plv1[s0_index] : tlb_plv0[s0_index];
@@ -179,7 +194,22 @@ wire   s1_odd;
 assign s1_odd   = tlb_ps4MB[s1_index] ? s1_vppn[9] : s1_va_bit12;
 
 assign s1_found = (match1 != 16'b0);
-assign s1_index = (s1_found) ? $clog2(match1) : 4'd0;
+assign s1_index = (match1[0]) ? 4'd0 :
+                  (match1[1]) ? 4'd1 :
+                  (match1[2]) ? 4'd2 :
+                  (match1[3]) ? 4'd3 :
+                  (match1[4]) ? 4'd4 :
+                  (match1[5]) ? 4'd5 :
+                  (match1[6]) ? 4'd6 :
+                  (match1[7]) ? 4'd7 :
+                  (match1[8]) ? 4'd8 :
+                  (match1[9]) ? 4'd9 :
+                  (match1[10]) ? 4'd10 :
+                  (match1[11]) ? 4'd11 :
+                  (match1[12]) ? 4'd12 :
+                  (match1[13]) ? 4'd13 :
+                  (match1[14]) ? 4'd14 :
+                  (match1[15]) ? 4'd15 : 4'd0;
 assign s1_ppn   = (s1_odd) ? tlb_ppn1[s1_index] : tlb_ppn0[s1_index];
 assign s1_ps    = (tlb_ps4MB[s1_index]) ? 6'd22 : 6'd12;
 assign s1_plv   = (s1_odd) ? tlb_plv1[s1_index] : tlb_plv0[s1_index];
