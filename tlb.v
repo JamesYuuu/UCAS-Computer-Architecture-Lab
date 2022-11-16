@@ -73,17 +73,17 @@ module tlb#(
 );
 
 // regs for tlb
-reg [TLBNUM-1:0] tlb_e;
-reg [TLBNUM-1:0] tlb_ps4MB;
-reg [18:0]       tlb_vppn [TLBNUM-1:0];
-reg [9:0]        tlb_asid [TLBNUM-1:0];
-reg              tlb_g    [TLBNUM-1:0];
-reg [19:0]       tlb_ppn0 [TLBNUM-1:0];
-reg [1:0]        tlb_plv0 [TLBNUM-1:0];
-reg [1:0]        tlb_mat0 [TLBNUM-1:0];
-reg              tlb_d0   [TLBNUM-1:0];
-reg              tlb_v0   [TLBNUM-1:0];
-reg [19:0]       tlb_ppn1 [TLBNUM-1:0];
+reg [TLBNUM-1:0] tlb_e;                         // is_exist
+reg [TLBNUM-1:0] tlb_ps4MB;                     // page_size  1:4MB 0:4KB
+reg [18:0]       tlb_vppn [TLBNUM-1:0];         // virtual page_page number
+reg [9:0]        tlb_asid [TLBNUM-1:0];         // address space id
+reg              tlb_g    [TLBNUM-1:0];         // global     1:global 0:local
+reg [19:0]       tlb_ppn0 [TLBNUM-1:0];         // physical page number
+reg [1:0]        tlb_plv0 [TLBNUM-1:0];         // page level
+reg [1:0]        tlb_mat0 [TLBNUM-1:0];         // memory attribute
+reg              tlb_d0   [TLBNUM-1:0];         // dirty
+reg              tlb_v0   [TLBNUM-1:0];         // valid
+reg [19:0]       tlb_ppn1 [TLBNUM-1:0];         
 reg [1:0]        tlb_plv1 [TLBNUM-1:0];
 reg [1:0]        tlb_mat1 [TLBNUM-1:0];
 reg              tlb_d1   [TLBNUM-1:0];
@@ -98,9 +98,94 @@ wire              cond3      [TLBNUM-1:0];
 wire              cond4      [TLBNUM-1:0];
 wire              inv_match  [TLBNUM-1:0];  
 
+genvar i;
+    generate
+        for (i = 0; i < TLBNUM; i = i + 1)
+        begin: tlb_match
+            assign match0[i] = (s0_vppn[18:10] == tlb_vppn[i][18:10])
+                            && (tlb_ps4MB[i] || s0_vppn[9:0] == tlb_vppn[i][9:0])
+                            && ((s0_asid == tlb_asid[i]) || tlb_g[i]);
+
+            assign match1[i] = (s1_vppn[18:10] == tlb_vppn[i][18:10])
+                            && (tlb_ps4MB[i] || s1_vppn[9:0] == tlb_vppn[i][9:0])
+                            && ((s1_asid == tlb_asid[i]) || tlb_g[i]);
+            
+            assign cond1[i] = (tlb_g[i] == 0);
+            assign cond2[i] = (tlb_g[i] == 1);
+            assign cond3[i] = (s1_asid == tlb_asid[i]);
+            assign cond4[i] = (s1_vppn[18:10] == tlb_vppn[i][18:10])
+                            && (tlb_ps4MB[i] || s1_vppn[9:0] == tlb_vppn[i][9:0]);
+
+            assign inv_match[i] = (invtlb_op == 5'd0 || invtlb_op == 1) && (cond1[i] || cond2[i])
+                               || (invtlb_op == 5'd4) && (cond1[i] && cond3[i])
+                               || (invtlb_op == 5'd5) && (cond1[i] && cond3[i] && cond4[i])
+                               || (invtlb_op == 5'd6) && ((cond2[i] || cond3[i]) && cond4[i]);
+            
+        end
+    endgenerate
+
+// write logic
+genvar j;
+    generate
+        for (j = 0; j < TLBNUM; j = j + 1)
+        begin: tlb_write
+            always @(posedge clk)
+            begin
+                if (we && w_index==j)
+                begin
+                    tlb_e[j]     <= w_e;
+                    tlb_ps4MB[j] <= (w_ps == 6'd22);
+                    tlb_vppn[j]  <= w_vppn;
+                    tlb_asid[j]  <= w_asid;
+                    tlb_g[j]     <= w_g;
+                    tlb_ppn0[j]  <= w_ppn0;
+                    tlb_plv0[j]  <= w_plv0;
+                    tlb_mat0[j]  <= w_mat0;
+                    tlb_d0[j]    <= w_d0;
+                    tlb_v0[j]    <= w_v0;
+                    tlb_ppn1[j]  <= w_ppn1;
+                    tlb_plv1[j]  <= w_plv1;
+                    tlb_mat1[j]  <= w_mat1;
+                    tlb_d1[j]    <= w_d1;
+                    tlb_v1[j]    <= w_v1;
+                end               
+            end
+
+            always @(posedge clk)
+            begin
+                if (inv_match[j] && invtlb_valid)
+                begin
+                    tlb_e[j]     <= 1'b0;
+                end
+            end
+        end
+    endgenerate
+
 // search port 1
+wire   s0_odd;
+assign s0_odd   = tlb_ps4MB[s0_index] ? s0_vppn[9] : s0_va_bit12;
+
+assign s0_found = (match0 != 16'b0);
+assign s0_index = (s0_found) ? $clog2(match0) : 4'd0;
+assign s0_ppn   = (s0_odd) ? tlb_ppn1[s0_index] : tlb_ppn0[s0_index];
+assign s0_ps    = (tlb_ps4MB[s0_index]) ? 6'd22 : 6'd12;
+assign s0_plv   = (s0_odd) ? tlb_plv1[s0_index] : tlb_plv0[s0_index];
+assign s0_mat   = (s0_odd) ? tlb_mat1[s0_index] : tlb_mat0[s0_index];
+assign s0_d     = (s0_odd) ? tlb_d1[s0_index]   : tlb_d0[s0_index];
+assign s0_v     = (s0_odd) ? tlb_v1[s0_index]   : tlb_v0[s0_index];
 
 // search port 2
+wire   s1_odd;
+assign s1_odd   = tlb_ps4MB[s1_index] ? s1_vppn[9] : s1_va_bit12;
+
+assign s1_found = (match1 != 16'b0);
+assign s1_index = (s1_found) ? $clog2(match1) : 4'd0;
+assign s1_ppn   = (s1_odd) ? tlb_ppn1[s1_index] : tlb_ppn0[s1_index];
+assign s1_ps    = (tlb_ps4MB[s1_index]) ? 6'd22 : 6'd12;
+assign s1_plv   = (s1_odd) ? tlb_plv1[s1_index] : tlb_plv0[s1_index];
+assign s1_mat   = (s1_odd) ? tlb_mat1[s1_index] : tlb_mat0[s1_index];
+assign s1_d     = (s1_odd) ? tlb_d1[s1_index]   : tlb_d0[s1_index];
+assign s1_v     = (s1_odd) ? tlb_v1[s1_index]   : tlb_v0[s1_index];
 
 // read port
 assign r_e      = tlb_e[r_index]; 
