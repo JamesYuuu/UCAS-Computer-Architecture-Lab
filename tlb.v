@@ -105,7 +105,7 @@ wire              inv_match  [TLBNUM-1:0];
 // read port
 assign r_e      = tlb_e[r_index]; 
 assign r_vppn   = tlb_vppn[r_index];
-assign r_ps     = tlb_ps4MB[r_index] ? 6'd21 : 6'd12;
+assign r_ps     = tlb_ps4MB[r_index] ? 6'd22 : 6'd12;
 assign r_asid   = tlb_asid[r_index];
 assign r_g      = tlb_g[r_index];
 assign r_ppn0   = tlb_ppn0[r_index];
