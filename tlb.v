@@ -54,7 +54,7 @@ module tlb#(
     input  wire                         w_v1,
 
     // read port
-    input  wire [$clog2(TLBNUM)-1:0]    r_index,
+    input  wire  [$clog2(TLBNUM)-1:0]   r_index,
     output wire                         r_e,
     output wire  [18:0]                 r_vppn,
     output wire  [5:0]                  r_ps,
