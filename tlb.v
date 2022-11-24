@@ -1,10 +1,9 @@
-module tlb#(
-    parameter TLBNUM = 16
-)
+module tlb
+#(parameter TLBNUM = 16)
 (
     input  wire                         clk,
 
-    // search port 0 (for fetch)
+    // search port 1 (for fetch)
     input  wire  [18:0]                 s0_vppn,
     input  wire                         s0_va_bit12,
     input  wire  [9:0]                  s0_asid,
@@ -17,7 +16,7 @@ module tlb#(
     output wire                         s0_d,
     output wire                         s0_v,
 
-    // search port 1 (for load/store)
+    // search port 2 (for load/store)
     input  wire  [18:0]                 s1_vppn,
     input  wire                         s1_va_bit12,
     input  wire  [9:0]                  s1_asid,
@@ -75,27 +74,29 @@ module tlb#(
 // regs for tlb
 reg [TLBNUM-1:0] tlb_e;                         // is_exist
 reg [TLBNUM-1:0] tlb_ps4MB;                     // page_size  1:4MB 0:4KB
-reg [18:0]       tlb_vppn [TLBNUM-1:0];         // virtual page_page number
+reg [18:0]       tlb_vppn [TLBNUM-1:0];         // virtual physical page number
 reg [9:0]        tlb_asid [TLBNUM-1:0];         // address space id
 reg              tlb_g    [TLBNUM-1:0];         // global     1:global 0:local
+
 reg [19:0]       tlb_ppn0 [TLBNUM-1:0];         // physical page number
-reg [1:0]        tlb_plv0 [TLBNUM-1:0];         // page level
+reg [1:0]        tlb_plv0 [TLBNUM-1:0];         // page previlege level
 reg [1:0]        tlb_mat0 [TLBNUM-1:0];         // memory attribute
 reg              tlb_d0   [TLBNUM-1:0];         // dirty
 reg              tlb_v0   [TLBNUM-1:0];         // valid
-reg [19:0]       tlb_ppn1 [TLBNUM-1:0];         
-reg [1:0]        tlb_plv1 [TLBNUM-1:0];
-reg [1:0]        tlb_mat1 [TLBNUM-1:0];
-reg              tlb_d1   [TLBNUM-1:0];
-reg              tlb_v1   [TLBNUM-1:0];
+
+reg [19:0]       tlb_ppn1 [TLBNUM-1:0];         // physical page number
+reg [1:0]        tlb_plv1 [TLBNUM-1:0];         // page previlege level
+reg [1:0]        tlb_mat1 [TLBNUM-1:0];         // memory attribute
+reg              tlb_d1   [TLBNUM-1:0];         // dirty
+reg              tlb_v1   [TLBNUM-1:0];         // valid
 
 // match logic
 wire [TLBNUM-1:0] match0;
 wire [TLBNUM-1:0] match1;
-wire              cond1      [TLBNUM-1:0];
-wire              cond2      [TLBNUM-1:0];
-wire              cond3      [TLBNUM-1:0];
-wire              cond4      [TLBNUM-1:0];
+wire              cond1      [TLBNUM-1:0];      // represent not global
+wire              cond2      [TLBNUM-1:0];      // represent global
+wire              cond3      [TLBNUM-1:0];      // represent asid equal, not global requires asid equal
+wire              cond4      [TLBNUM-1:0];      // represent 
 wire              inv_match  [TLBNUM-1:0];  
 
 genvar i;
