@@ -190,7 +190,8 @@ csr csr(
     .has_int                (has_int             ),
     .ipi_int_in             (ipi_int_in          ),
     .stable_counter_value   (stable_counter_value),
-    // csr
+    // tlb
+    .inst_tlb_op            (inst_tlb_op         ),
     // write port
     .we            (we             ),
     .w_index       (w_index        ),
