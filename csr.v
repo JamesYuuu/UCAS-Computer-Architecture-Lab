@@ -60,11 +60,11 @@ module csr(
 );
 
 // inst_tlb;
-wire inst_tlbfill;
-wire inst_tlbwr;
-wire inst_tlbsrch;
-wire inst_tlbrd;
-assign {inst_tlbfill, inst_tlbwr, inst_tlbsrch, inst_tlbrd} = inst_tlb_op;
+wire inst_tlb_fill;
+wire inst_tlb_wr;
+wire inst_tlb_srch;
+wire inst_tlb_rd;
+assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd} = inst_tlb_op;
 
 // translate csr_num to csr;
 wire  is_csr_crmd;
@@ -473,7 +473,7 @@ always @(posedge clk) begin
         csr_tlbidx_ps    <= 6'b0;
         csr_tlbidx_ne    <= 1'b1;
     end
-    else if (inst_tlbsrch)
+    else if (inst_tlb_srch)
     begin
         if (s1_found)
         begin
@@ -485,7 +485,7 @@ always @(posedge clk) begin
             csr_tlbidx_ne    <= 1'b1;
         end
     end
-    else if (inst_tlbrd)
+    else if (inst_tlb_rd)
     begin
         csr_tlbidx_ps <= r_ps;
         csr_tlbidx_ne <= ~r_e;
@@ -507,7 +507,7 @@ always @(posedge clk) begin
     begin
         csr_tlbehi_vppn <= 19'b0;
     end
-    else if (inst_tlbrd)
+    else if (inst_tlb_rd)
     begin
         csr_tlbehi_vppn <= r_vppn;
     end
@@ -533,7 +533,7 @@ always @(posedge clk) begin
         csr_tlbelo0_g    <= 1'b0;
         csr_tlbelo0_ppn  <= 24'b0;
     end
-    else if (inst_tlbrd)
+    else if (inst_tlb_rd)
     begin
         csr_tlbelo0_v    <= r_v0;
         csr_tlbelo0_d    <= r_d0;
@@ -570,7 +570,7 @@ always @(posedge clk) begin
         csr_tlbelo1_g    <= 1'b0;
         csr_tlbelo1_ppn  <= 24'b0;
     end
-    else if (inst_tlbrd)
+    else if (inst_tlb_rd)
     begin
         csr_tlbelo1_v    <= r_v1;
         csr_tlbelo1_d    <= r_d1;
@@ -602,7 +602,7 @@ always @(posedge clk) begin
     begin
         csr_asid_asid <= 10'b0;
     end
-    else if (inst_tlbrd)
+    else if (inst_tlb_rd)
     begin
         csr_asid_asid <= r_asid;
     end
@@ -683,7 +683,7 @@ always @(posedge clk) begin
     begin
         tlbfill_index <= 4'b0;
     end
-    else if (inst_tlbfill)
+    else if (inst_tlb_fill)
     begin
         if (tlbfill_index == 4'b1111)
         begin
@@ -697,8 +697,8 @@ always @(posedge clk) begin
 end
 
 // output for csr
-assign we       = inst_tlbwr || inst_tlbfill;
-assign w_index  = inst_tlbfill ? tlbfill_index : csr_tlbidx_index;
+assign we       = inst_tlb_wr || inst_tlb_fill;
+assign w_index  = inst_tlb_fill ? tlbfill_index : csr_tlbidx_index;
 assign w_e      = ~csr_tlbidx_ne;
 assign w_vppn   = csr_tlbehi_vppn;
 assign w_ps     = csr_tlbidx_ps;

@@ -6,10 +6,10 @@ module ID_stage(
     output          ds_allowin,
     // input from IF stage
     input           fs_to_ds_valid,
-    input   [64:0]  fs_to_ds_bus,
+    input   [65:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [204:0] ds_to_es_bus,
+    output  [215:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -23,14 +23,17 @@ module ID_stage(
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
-    input           has_int
+    input           has_int,
+    output          csr_critical_change,
+    input           wb_refetch
 );
 
 wire        ine_detected;
+wire        refetch_needed;
 
 reg         ds_valid;
 wire        ds_ready_go;
-reg  [64:0] fs_to_ds_bus_r;
+reg  [65:0] fs_to_ds_bus_r;
 
 wire [31:0] ds_pc;
 wire [31:0] ds_inst;
@@ -60,6 +63,7 @@ wire [ 4:0] op_19_15;
 wire [ 4:0] rd;
 wire [ 4:0] rj;
 wire [ 4:0] rk;
+wire [ 4:0] op_tlb_inv;
 wire [11:0] i12;
 wire [19:0] i20;
 wire [15:0] i16;
@@ -159,6 +163,7 @@ assign op_19_15  = ds_inst[19:15];
 assign rd   = ds_inst[ 4: 0];
 assign rj   = ds_inst[ 9: 5];
 assign rk   = ds_inst[14:10];
+assign op_tlb_inv = ds_inst[4:0];  
 
 assign i12  = ds_inst[21:10];
 assign i20  = ds_inst[24: 5];
@@ -215,6 +220,13 @@ wire inst_rdcntvl_w;
 wire inst_rdcntvh_w;
 wire inst_rdcntid;
 
+wire inst_tlb_srch;
+wire inst_tlb_wr;
+wire inst_tlb_fill;
+wire inst_tlb_rd;
+wire inst_tlb_inv;
+wire [9:0] tlb_bus;
+
 assign inst_slti    = op_31_26_d[6'b000000] & op_25_22_d[4'b1000];
 assign inst_sltui   = op_31_26_d[6'b000000] & op_25_22_d[4'b1001];
 assign inst_andi    = op_31_26_d[6'b000000] & op_25_22_d[4'b1101];
@@ -237,6 +249,14 @@ assign inst_mod_wu  = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2
 assign inst_rdcntvl_w = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11000) & (ds_inst[9:5] == 5'b00000);
 assign inst_rdcntvh_w = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11001) & (ds_inst[9:5] == 5'b00000);
 assign inst_rdcntid   = op_31_26_d[6'b000000] & op_25_22_d[4'b0000] & op_21_20_d[2'b00] & op_19_15_d[5'b00000] & (ds_inst[14:10] == 5'b11000) & (ds_inst[4:0] == 5'b00000);
+
+assign inst_tlb_srch    = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01010) & (ds_inst[9:0] == 10'b0000000000);
+assign inst_tlb_rd      = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01011) & (ds_inst[9:0] == 10'b0000000000);
+assign inst_tlb_wr      = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01100) & (ds_inst[9:0] == 10'b0000000000);
+assign inst_tlb_fill    = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10000] & (ds_inst[14:10] == 5'b01101) & (ds_inst[9:0] == 10'b0000000000);
+assign inst_tlb_inv     = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10011];
+
+assign tlb_bus = {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv};
 
 wire need_ui12;
 wire rj_eq_rd;
@@ -464,7 +484,7 @@ wire prev_exception_op;
 
 assign br_stall = !ds_ready_go && br_con;
 assign br_bus = {br_stall,br_taken,br_target};
-assign {prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
+assign {refetch_needed, prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
 
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
 
@@ -477,17 +497,17 @@ assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 assign next_exception_op         = {prev_exception_op,inst_break,ine_detected};
 assign inst_stable_counter       = {inst_rdcntid, inst_rdcntvh_w, inst_rdcntvl_w};
-assign ds_to_es_bus              = {inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
+assign ds_to_es_bus              = {refetch_needed, tlb_bus, inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || ((ms_ld || ms_csr) && ms_valid));
-assign ds_allowin       = !ds_valid || wb_ex || wb_ertn || ds_ready_go && es_allowin;
+assign ds_allowin       = !ds_valid || wb_ex || wb_ertn || wb_refetch || ds_ready_go && es_allowin;
 assign ds_to_es_valid   = ds_valid && ds_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         ds_valid <=1'b0;
     end
-    else if(wb_ex | wb_ertn) begin
+    else if(wb_ex | wb_ertn | wb_refetch) begin
         ds_valid <= 1'b0;
     end
     else if (ds_allowin) begin
@@ -551,5 +571,17 @@ assign rkd_value = (rf_raddr2 == 5'b0) ? 32'b0:
                    (rf_raddr2 == es_addr && es_we && !es_res_from_mem && es_valid)? es_result :
                    (rf_raddr2 == ms_addr && ms_we && ms_to_ws_valid)? ms_result:
                    (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
+
+assign csr_critical_change =    inst_tlb_wr     |
+                                inst_tlb_fill   |
+                                inst_tlb_rd     |
+                                inst_csrwr      & (csr_num == 14'h0)    |
+                                inst_csrwr      & (csr_num == 14'h180)  |
+                                inst_csrwr      & (csr_num == 14'h181)  |
+                                inst_csrwr      & (csr_num == 14'h18)   |
+                                inst_csrxchg    & (csr_num == 14'h0)    |
+                                inst_csrxchg    & (csr_num == 14'h180)  |
+                                inst_csrxchg    & (csr_num == 14'h181)  |
+                                inst_csrxchg    & (csr_num == 14'h18);
 
 endmodule

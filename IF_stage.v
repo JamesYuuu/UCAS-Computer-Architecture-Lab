@@ -7,7 +7,7 @@ module IF_stage(
     input   [33:0]  br_bus,
     // output to ID stage
     output          fs_to_ds_valid,
-    output  [64:0]  fs_to_ds_bus,
+    output  [65:0]  fs_to_ds_bus,
     // inst sram interface
     output          inst_sram_req,       // if there is a request
     output          inst_sram_wr,        // read or write
@@ -22,8 +22,14 @@ module IF_stage(
     input           wb_ex,
     input           wb_ertn,
     input   [31:0]  csr_eentry,
-    input   [31:0]  csr_era
+    input   [31:0]  csr_era,
+
+    input           csr_critical_change,
+    input           wb_refetch
 );
+
+wire refetch_needed;
+
 wire handshake;
 reg [4:0] preif_current_state;
 reg [4:0] preif_next_state;
@@ -59,10 +65,12 @@ assign {br_stall,br_taken_ori,br_target} = br_bus;
 
 assign br_taken = br_taken_ori && ~br_stall;
 
+assign refetch_needed = csr_critical_change;
+
 // signals to output for ID_stage
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
-assign fs_to_ds_bus = {adef_detected,fs_inst,fs_pc};
+assign fs_to_ds_bus = {refetch_needed, adef_detected,fs_inst,fs_pc};
 
 // pre-IF stage
 assign seq_pc       =   fs_pc + 3'h4;

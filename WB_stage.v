@@ -5,7 +5,7 @@ module WB_stage(
     output              ws_allowin,
     // input from EXE stage
     input               ms_to_ws_valid,
-    input   [206:0]     ms_to_ws_bus,
+    input   [217:0]     ms_to_ws_bus,
     // output for reg_file
     output  [38:0]      rf_bus,
     // trace debug interface
@@ -21,41 +21,50 @@ module WB_stage(
     output [63:0]       stable_counter_value,
     output              has_int,
     // comunication with tlb
-    input              r_e,
-    input   [18:0]     r_vppn,
-    input   [5:0]      r_ps,
-    input   [9:0]      r_asid,
-    input              r_g,
-    input   [19:0]     r_ppn0,
-    input   [1:0]      r_plv0,
-    input   [1:0]      r_mat0,
-    input              r_d0,
-    input              r_v0,
-    input   [19:0]     r_ppn1,
-    input   [1:0]      r_plv1,
-    input   [1:0]      r_mat1,
-    input              r_d1,
-    input              r_v1,
-    output  [3:0]      r_index,
-    output             we,
-    output  [3:0]      w_index,
-    output             w_e,
-    output  [18:0]     w_vppn,
-    output  [5:0]      w_ps,
-    output  [9:0]      w_asid,
-    output             w_g,
-    output  [19:0]     w_ppn0,
-    output  [1:0]      w_plv0,
-    output  [1:0]      w_mat0,
-    output             w_d0,
-    output             w_v0,
-    output  [19:0]     w_ppn1,
-    output  [1:0]      w_plv1,
-    output  [1:0]      w_mat1,
-    output             w_d1,
-    output             w_v1,
-    input              s1_found,
-    input   [3:0]      s1_index
+    input               r_e,
+    input   [18:0]      r_vppn,
+    input   [5:0]       r_ps,
+    input   [9:0]       r_asid,
+    input               r_g,
+    input   [19:0]      r_ppn0,
+    input   [1:0]       r_plv0,
+    input   [1:0]       r_mat0,
+    input               r_d0,
+    input               r_v0,
+    input   [19:0]      r_ppn1,
+    input   [1:0]       r_plv1,
+    input   [1:0]       r_mat1,
+    input               r_d1,
+    input               r_v1,
+    output  [3:0]       r_index,
+    output              we,
+    output  [3:0]       w_index,
+    output              w_e,
+    output  [18:0]      w_vppn,
+    output  [5:0]       w_ps,
+    output  [9:0]       w_asid,
+    output              w_g,
+    output  [19:0]      w_ppn0,
+    output  [1:0]       w_plv0,
+    output  [1:0]       w_mat0,
+    output              w_d0,
+    output              w_v0,
+    output  [19:0]      w_ppn1,
+    output  [1:0]       w_plv1,
+    output  [1:0]       w_mat1,
+    output              w_d1,
+    output              w_v1,
+    input               s1_found,
+    input   [3:0]       s1_index,
+    // to stall the tlb_srch
+    output              wb_write_asid_ehi,
+
+    // to handle tlb inst in ex
+    input               ex_inst_tlb_inv,
+    input               ex_inst_tlb_srch,
+    input [4:0]         ex_op_tlb_inv,
+
+    output              wb_refetch
 );
 
 wire        gr_we;
@@ -69,7 +78,7 @@ wire [31:0] rf_wdata;
 
 reg          ws_valid;
 wire         ws_ready_go;
-reg  [206:0] ms_to_ws_bus_r;
+reg  [217:0] ms_to_ws_bus_r;
 
 wire [31:0]  data_sram_addr_error;
 wire [33:0]  csr_data;
@@ -108,11 +117,20 @@ wire        ipi_int_in;
 wire [31:0]  rj_value;
 wire [31:0]  rkd_value;
 
-assign  {csr_op,csr_num,csr_code}=csr_data;
-assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall}=csr_op;
-assign  {adef_detected,inst_break,ine_detected,ale_detected}=exception_op;
+wire [9:0]  tlb_bus;
+wire inst_tlb_fill;
+wire inst_tlb_wr;
+wire inst_tlb_srch;
+wire inst_tlb_rd;
+wire inst_tlb_inv;
+wire [4:0] op_tlb_inv;
+wire [3:0] inst_tlb_op;
 
-assign rf_we    = gr_we && ws_valid && ~(wb_ex);
+assign  {csr_op,csr_num,csr_code}=csr_data;
+assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall} = csr_op;
+assign  {adef_detected,inst_break,ine_detected,ale_detected} = exception_op;
+
+assign rf_we    = gr_we && ws_valid && ~(wb_ex) && ~(wb_refetch);
 assign rf_waddr = dest;
 assign rf_wdata = inst_csrrd ? csr_rvalue : 
                   inst_csrwr ? csr_rvalue :
@@ -126,7 +144,7 @@ always @(posedge clk) begin
     if (reset) begin
         ws_valid <= 1'b0;
     end
-    else if (wb_ex | wb_ertn) begin
+    else if (wb_ex | wb_ertn | wb_refetch) begin
         ws_valid <= 1'b0;
     end
     else if (ws_allowin) begin
@@ -139,8 +157,10 @@ end
 
 //deal with input and output
 wire mem_re;
-assign {mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
+assign {refetch_needed, tlb_bus, mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc}=ms_to_ws_bus_r;
 assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
+
+assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
 
 assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
@@ -169,7 +189,10 @@ assign wb_csr_num = wb_ertn ? 14'h6 :
                     csr_num;
 assign csr_era = csr_rvalue;
 
+assign inst_tlb_op = {inst_tlb_fill, inst_tlb_wr, ex_inst_tlb_srch, inst_tlb_rd};
+
 csr csr(
+    // csr
     .reset                  (reset               ),
     .clk                    (clk                 ),
     .csr_re                 (csr_re              ),
@@ -237,4 +260,11 @@ assign debug_wb_rf_we    = {4{rf_we}};
 assign debug_wb_rf_wnum  = rf_waddr;
 assign debug_wb_rf_wdata = rf_wdata;
 
+assign wb_write_asid_ehi =  inst_tlb_rd     | 
+                            inst_csrwr      & (csr_num == 14'h18) |
+                            inst_csrwr      & (csr_num == 14'h11) |
+                            inst_csrxchg    & (csr_num == 14'h18) |
+                            inst_csrxchg    & (csr_num == 14'h11);
+
+assign wb_refetch = refetch_needed;
 endmodule

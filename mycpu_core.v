@@ -43,9 +43,9 @@ wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
 wire [64:0]  fs_to_ds_bus;
-wire [208:0] ds_to_es_bus;
-wire [213:0] es_to_ms_bus;
-wire [206:0] ms_to_ws_bus;
+wire [215:0] ds_to_es_bus;
+wire [224:0] es_to_ms_bus;
+wire [217:0] ms_to_ws_bus;
 wire [38:0]  rf_bus;
 wire [33:0]  br_bus;
 wire         out_ms_valid;
@@ -58,6 +58,13 @@ wire [31:0]  csr_eentry;
 wire [31:0]  csr_era;
 wire         has_int;
 wire [63:0]  stable_counter_value;
+
+wire mem_write_asid_ehi;
+wire wb_write_asid_ehi;
+wire csr_critical_change;
+
+wire wb_refetch;
+wire mem_refetch;
 
 // tlb
 wire  [18:0]                 s0_vppn;
@@ -121,6 +128,14 @@ wire  [1:0]                  r_plv1;
 wire  [1:0]                  r_mat1;
 wire                         r_d1;
 wire                         r_v1;
+
+wire                         ex_inst_tlb_inv;
+wire                         ex_inst_tlb_srch;
+wire [4:0]                   ex_op_tlb_inv;
+
+assign invtlb_op = ex_op_tlb_inv;
+assign invtlb_valid = ex_inst_tlb_inv;
+
 // IF stage
 IF_stage IF_stage(
     .clk            (clk            ),
@@ -146,7 +161,9 @@ IF_stage IF_stage(
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .csr_era        (csr_era        ),
-    .csr_eentry     (csr_eentry     )
+    .csr_eentry     (csr_eentry     ),
+    .csr_critical_change(csr_critical_change),
+    .wb_refetch     (wb_refetch     )
 );
 // ID stage
 ID_stage ID_stage(
@@ -174,7 +191,9 @@ ID_stage ID_stage(
     // interrupt signal
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
-    .has_int        (has_int        )
+    .has_int        (has_int        ),
+    .csr_critical_change(csr_critical_change),
+    .wb_refetch     (wb_refetch     )
 );
 // EXE stage
 EXE_stage EXE_stage(
@@ -204,7 +223,15 @@ EXE_stage EXE_stage(
     .wb_ertn        (wb_ertn        ),
     .mem_ex         (mem_ex         ),
     .mem_ertn       (mem_ertn       ),
-    .stable_counter_value(stable_counter_value)
+    .stable_counter_value(stable_counter_value),
+
+    .ex_inst_tlb_inv(ex_inst_tlb_inv),
+    .ex_inst_tlb_srch(ex_inst_tlb_srch),
+    .ex_op_tlb_inv  (ex_op_tlb_inv),
+    .mem_write_asid_ehi(mem_write_asid_ehi),
+    .wb_write_asid_ehi(wb_write_asid_ehi),
+    .wb_refetch     (wb_refetch     ),
+    .mem_refetch    (mem_refetch    )
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -228,7 +255,11 @@ MEM_stage MEM_stage(
     .wb_ex          (wb_ex          ),
     .wb_ertn        (wb_ertn        ),
     .mem_ertn       (mem_ertn       ),
-    .mem_ex         (mem_ex         )
+    .mem_ex         (mem_ex         ),
+    .mem_write_asid_ehi(mem_write_asid_ehi),
+    .wb_write_asid_ehi(wb_write_asid_ehi),
+    .mem_refetch    (mem_refetch    ),
+    .wb_refetch     (wb_refetch     )
 );
 // WB stage
 WB_stage WB_stage(
@@ -290,7 +321,10 @@ WB_stage WB_stage(
     .r_d1          (r_d1           ),
     .r_v1          (r_v1           ),
     .s1_found      (s1_found       ),
-    .s1_index      (s1_index       )
+    .s1_index      (s1_index       ),
+    .mem_write_asid_ehi(mem_write_asid_ehi),
+    .wb_write_asid_ehi(wb_write_asid_ehi),
+    .wb_refetch     (wb_refetch     )
 );
 // tlb
 tlb tlb(

@@ -6,10 +6,10 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [204:0]     ds_to_es_bus,
+    input   [215:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [213:0]     es_to_ms_bus,
+    output  [224:0]     es_to_ms_bus,
     // data sram interface
     output          data_sram_req,       // if there is a request
     output          data_sram_wr,        // read or write    1 means write and 0 means read
@@ -19,16 +19,27 @@ module EXE_stage(
     output  [31:0]  data_sram_wdata,     // write data
     input           data_sram_addr_ok,   // if data and addr has been received
     // output es_valid and bus for ID stage
-    output              out_es_valid,
+    output          out_es_valid,
     // interrupt signal
-    input               wb_ex,
-    input               mem_ex,
-    input               wb_ertn,
-    input               mem_ertn,
-    input [63:0]        stable_counter_value
+    input           wb_ex,
+    input           mem_ex,
+    input           wb_ertn,
+    input           mem_ertn,
+    input [63:0]    stable_counter_value,
+
+    output          ex_inst_tlb_srch,
+    output          ex_inst_tlb_inv,
+    output [4:0]    ex_op_tlb_inv,
+
+    input           wb_write_asid_ehi,
+    input           mem_write_asid_ehi,
+    
+    input           mem_refetch,
+    input           wb_refetch
 );
 
 wire ale_detected;
+wire refetch_needed;
 
 wire [11:0] alu_op;
 wire        src1_is_pc;
@@ -45,7 +56,7 @@ wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
 wire [31:0] alu_result_org;
-reg [204:0] ds_to_es_bus_r;
+reg [215:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -62,8 +73,10 @@ wire    es_ready_go;
 
 wire       after_ex;
 wire       after_ertn;
+wire       after_refetch;
 assign     after_ertn = mem_ertn | wb_ertn;
 assign     after_ex = mem_ex | wb_ex;
+assign     after_refetch = mem_refetch | wb_refetch;
 
 // code by JamesYu
 // add control signals
@@ -139,6 +152,14 @@ assign div_unsigned_valid = (inst_div_wu | inst_mod_wu) & ~div_unsigned_got;
 reg signed_result_valid;
 reg unsigned_result_valid;
 
+wire [9:0] tlb_bus;
+wire inst_tlb_fill;
+wire inst_tlb_wr;
+wire inst_tlb_srch;
+wire inst_tlb_rd;
+wire inst_tlb_inv;
+wire [4:0] op_tlb_inv;
+
 always @ (posedge clk)
 begin
     if(inst_div_w | inst_mod_w)
@@ -201,7 +222,7 @@ always @(posedge clk) begin
     if (reset) begin
         es_valid <= 1'b0;
     end
-    else if(wb_ex | wb_ertn) begin
+    else if(wb_ex | wb_ertn | wb_refetch) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin
@@ -213,6 +234,7 @@ always @(posedge clk) begin
 end
 
 assign es_ready_go    = ((inst_div_w | inst_mod_w) && (~(div_signed_result_valid & div_signed_got))) | ((inst_div_wu | inst_mod_wu) && (~(div_unsigned_result_valid & div_unsigned_got))) ? 1'b0:
+                        (inst_tlb_srch & (mem_write_asid_ehi | wb_write_asid_ehi)) ? 1'b0 :
                         (mem_re || mem_we) ? data_sram_addr_ok : 1'b1;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
@@ -225,6 +247,14 @@ assign write_result = (is_mul) ? mul_result :
 
 // deal with input and output
 wire [33:0] csr_data;
+wire [4:0]  csr_op;
+wire [13:0] csr_num;
+wire [14:0] csr_code;
+wire inst_csrrd;
+wire inst_csrwr;
+wire inst_csrxchg;
+wire inst_ertn;
+wire inst_syscall;
 wire [2:0]  prev_exception_op;
 wire [3:0]  next_exception_op;
 wire [31:0] data_sram_addr_error;
@@ -234,8 +264,11 @@ wire inst_rdcntvh_w;
 wire inst_rdcntvl_w;
 wire        ds_has_int;
 assign next_exception_op = {prev_exception_op,ale_detected};
-assign {inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign {refetch_needed, tlb_bus, inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
+assign {csr_op,csr_num,csr_code} = csr_data;
+assign {inst_csrrd, inst_csrwr, inst_csrxchg, inst_ertn, inst_syscall} = csr_op;
 
 assign inst_rdcntid = inst_stable_counter[2];
 assign inst_rdcntvh_w = inst_stable_counter[1];
@@ -259,6 +292,9 @@ assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] != 2'b00))
 assign out_es_valid = es_valid;
 assign data_sram_addr_error = alu_result;
 
+assign ex_inst_tlb_inv = inst_tlb_inv;
+assign ex_inst_tlb_srch = inst_tlb_srch & es_ready_go;
+assign ex_op_tlb_inv = op_tlb_inv;
 
 // deal with data_sram
 assign mem_re = inst_ld_b || inst_ld_bu || inst_ld_h || inst_ld_hu || inst_ld_w;
@@ -277,7 +313,7 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
 // data sram interface
 assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 : 1'b0;
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
-assign data_sram_wstrb = (after_ex || after_ertn || ale_detected) ? 4'b0 : wstrb;
+assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 
