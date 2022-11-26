@@ -220,6 +220,7 @@ wire inst_rdcntvl_w;
 wire inst_rdcntvh_w;
 wire inst_rdcntid;
 
+wire inst_tlb;
 wire inst_tlb_srch;
 wire inst_tlb_wr;
 wire inst_tlb_fill;
@@ -257,6 +258,7 @@ assign inst_tlb_fill    = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20
 assign inst_tlb_inv     = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b00] & op_19_15_d[5'b10011];
 
 assign tlb_bus = {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv};
+assign inst_tlb = inst_tlb_srch | inst_tlb_rd | inst_tlb_wr | inst_tlb_fill | inst_tlb_inv;
 
 wire need_ui12;
 wire rj_eq_rd;
@@ -452,7 +454,7 @@ assign src2_is_imm   = inst_slli_w |
 
 assign res_from_mem  = inst_ld_w | inst_ld_b | inst_ld_h | inst_ld_bu | inst_ld_hu;
 assign dst_is_r1     = inst_bl;
-assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h & ~inst_syscall & ~inst_ertn;
+assign gr_we         = ~inst_st_w & ~inst_b & ~br_con & ~inst_st_b & ~inst_st_h & ~inst_syscall & ~inst_ertn & ~inst_tlb;
 assign dest          =  inst_rdcntid    ? rj :
                         dst_is_r1       ? 5'd1 : rd;
 
