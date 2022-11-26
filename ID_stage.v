@@ -372,7 +372,12 @@ assign ine_detected = ~(
                             inst_rdcntid    |
                             inst_rdcntvh_w  |
                             inst_rdcntvl_w  |
-                            inst_pcaddu12i
+                            inst_pcaddu12i  |
+                            inst_tlb_fill   |
+                            inst_tlb_inv    |
+                            inst_tlb_rd     |
+                            inst_tlb_srch   |
+                            inst_tlb_wr
 );
 
 wire  [4:0]   csr_op;

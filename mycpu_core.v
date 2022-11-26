@@ -286,6 +286,8 @@ WB_stage WB_stage(
     .csr_eentry             (csr_eentry             ),
     .has_int                (has_int                ),
     .stable_counter_value   (stable_counter_value   ),
+    .ex_inst_tlb_inv        (ex_inst_tlb_inv        ),
+    .ex_inst_tlb_srch       (ex_inst_tlb_srch       ),
     // csr
     // write port
     .we                     (we                     ),
