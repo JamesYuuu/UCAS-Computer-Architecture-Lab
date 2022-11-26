@@ -490,8 +490,16 @@ always @(posedge clk) begin
     end
     else if (inst_tlb_rd)
     begin
-        csr_tlbidx_ps <= r_ps;
-        csr_tlbidx_ne <= ~r_e;
+        if (~r_e) 
+        begin
+            csr_tlbidx_ps <= 6'b0;
+            csr_tlbidx_ne <= 1'b1;
+        end
+        else
+        begin
+            csr_tlbidx_ps <= r_ps;
+            csr_tlbidx_ne <= 1'b0;
+        end
     end
     else if (csr_we && is_csr_tlbidx)
     begin
@@ -512,7 +520,14 @@ always @(posedge clk) begin
     end
     else if (inst_tlb_rd)
     begin
-        csr_tlbehi_vppn <= r_vppn;
+        if (~r_e) 
+        begin
+            csr_tlbehi_vppn <= 19'b0;
+        end
+        else
+        begin
+            csr_tlbehi_vppn <= r_vppn;
+        end
     end
     else if (is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi)
     begin
@@ -538,12 +553,24 @@ always @(posedge clk) begin
     end
     else if (inst_tlb_rd)
     begin
-        csr_tlbelo0_v    <= r_v0;
-        csr_tlbelo0_d    <= r_d0;
-        csr_tlbelo0_plv  <= r_plv0;
-        csr_tlbelo0_mat  <= r_mat0;
-        csr_tlbelo0_g    <= r_g;
-        csr_tlbelo0_ppn  <= r_ppn0;
+        if (~r_e)
+        begin
+            csr_tlbelo0_v    <= 1'b0;
+            csr_tlbelo0_d    <= 1'b0;
+            csr_tlbelo0_plv  <= 2'b0;
+            csr_tlbelo0_mat  <= 2'b0;
+            csr_tlbelo0_g    <= 1'b0;
+            csr_tlbelo0_ppn  <= 24'b0;
+        end
+        else 
+        begin
+            csr_tlbelo0_v    <= r_v0;
+            csr_tlbelo0_d    <= r_d0;
+            csr_tlbelo0_plv  <= r_plv0;
+            csr_tlbelo0_mat  <= r_mat0;
+            csr_tlbelo0_g    <= r_g;
+            csr_tlbelo0_ppn  <= r_ppn0;
+        end
     end
     else if (csr_we && is_csr_tlbelo0)
     begin
@@ -575,12 +602,24 @@ always @(posedge clk) begin
     end
     else if (inst_tlb_rd)
     begin
-        csr_tlbelo1_v    <= r_v1;
-        csr_tlbelo1_d    <= r_d1;
-        csr_tlbelo1_plv  <= r_plv1;
-        csr_tlbelo1_mat  <= r_mat1;
-        csr_tlbelo1_g    <= r_g;
-        csr_tlbelo1_ppn  <= r_ppn1;
+        if (~r_e)
+        begin
+            csr_tlbelo1_v    <= 1'b0;
+            csr_tlbelo1_d    <= 1'b0;
+            csr_tlbelo1_plv  <= 2'b0;
+            csr_tlbelo1_mat  <= 2'b0;
+            csr_tlbelo1_g    <= 1'b0;
+            csr_tlbelo1_ppn  <= 24'b0;
+        end
+        else
+        begin
+            csr_tlbelo1_v    <= r_v1;
+            csr_tlbelo1_d    <= r_d1;
+            csr_tlbelo1_plv  <= r_plv1;
+            csr_tlbelo1_mat  <= r_mat1;
+            csr_tlbelo1_g    <= r_g;
+            csr_tlbelo1_ppn  <= r_ppn1;
+        end
     end
     else if (csr_we && is_csr_tlbelo1)
     begin
@@ -607,7 +646,14 @@ always @(posedge clk) begin
     end
     else if (inst_tlb_rd)
     begin
-        csr_asid_asid <= r_asid;
+        if (~r_e)
+        begin
+            csr_asid_asid <= 10'b0;
+        end
+        else
+        begin
+            csr_asid_asid <= r_asid;
+        end
     end
     else if (csr_we && is_csr_asid)
     begin
