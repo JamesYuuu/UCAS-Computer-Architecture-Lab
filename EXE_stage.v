@@ -31,8 +31,8 @@ module EXE_stage(
     input  [31:0]       csr_asid,
     input  [31:0]       csr_tlbehi,
     output              ex_inst_tlb_srch,
-    output              ex_inst_tlb_inv,
-    output [4:0]        ex_op_tlb_inv,
+    output              invtlb_valid,
+    output [4:0]        invtlb_op,
     output [9:0]        s1_asid,
     output [18:0]       s1_vppn,
     output              s1_va_bit12,
@@ -302,9 +302,9 @@ assign ale_detected = ((inst_st_w | inst_ld_w) & (data_sram_addr[1:0] != 2'b00))
 assign out_es_valid = es_valid;
 assign data_sram_addr_error = alu_result;
 
-assign ex_inst_tlb_inv = inst_tlb_inv;
 assign ex_inst_tlb_srch = inst_tlb_srch & es_ready_go;
-assign ex_op_tlb_inv = op_tlb_inv;
+assign invtlb_valid     = inst_tlb_inv;
+assign invtlb_op        = op_tlb_inv;
 
 // deal with data_sram
 assign mem_re = inst_ld_b || inst_ld_bu || inst_ld_h || inst_ld_hu || inst_ld_w;
@@ -329,8 +329,10 @@ assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 
 
 // FIXME
-assign s1_asid = ex_inst_tlb_srch ? csr_asid[9:0] : 10'b0;
-assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] : 19'b0;
-assign s1_va_bit12 = 1'b0;
+assign s1_asid = ex_inst_tlb_srch ? csr_asid[9:0] : 
+                 inst_tlb_inv ? rj_value[9:0] : 10'b0;
+assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] : 
+                 inst_tlb_inv ? rkd_value[31:13]: 19'b0;
+assign s1_va_bit12 = rkd_value[12];
 
 endmodule

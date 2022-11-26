@@ -59,10 +59,8 @@ module WB_stage(
     // to stall the tlb_srch
     output              wb_write_asid_ehi,
 
-    // to handle tlb inst in ex
-    input               ex_inst_tlb_inv,
+    // to handle tlb inst in exe
     input               ex_inst_tlb_srch,
-    input   [4:0]       ex_op_tlb_inv,
     output  [31:0]      csr_asid,
     output  [31:0]      csr_tlbehi,
 

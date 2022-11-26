@@ -133,12 +133,8 @@ wire  [1:0]                  r_mat1;
 wire                         r_d1;
 wire                         r_v1;
 
-wire                         ex_inst_tlb_inv;
 wire                         ex_inst_tlb_srch;
-wire [4:0]                   ex_op_tlb_inv;
 
-assign invtlb_op = ex_op_tlb_inv;
-assign invtlb_valid = ex_inst_tlb_inv;
 
 // IF stage
 IF_stage IF_stage(
@@ -230,9 +226,9 @@ EXE_stage EXE_stage(
     .mem_ertn               (mem_ertn               ),
     .stable_counter_value   (stable_counter_value   ),
 
-    .ex_inst_tlb_inv        (ex_inst_tlb_inv        ),
+    .invtlb_valid           (invtlb_valid           ),
     .ex_inst_tlb_srch       (ex_inst_tlb_srch       ),
-    .ex_op_tlb_inv          (ex_op_tlb_inv          ),
+    .invtlb_op              (invtlb_op              ),
     .mem_write_asid_ehi     (mem_write_asid_ehi     ),
     .wb_write_asid_ehi      (wb_write_asid_ehi      ),
     .wb_refetch             (wb_refetch             ),
@@ -294,7 +290,6 @@ WB_stage WB_stage(
     .csr_eentry             (csr_eentry             ),
     .has_int                (has_int                ),
     .stable_counter_value   (stable_counter_value   ),
-    .ex_inst_tlb_inv        (ex_inst_tlb_inv        ),
     .ex_inst_tlb_srch       (ex_inst_tlb_srch       ),
     // csr
     // write port
