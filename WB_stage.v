@@ -144,6 +144,7 @@ assign ws_allowin  = !ws_valid || ws_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         ws_valid <= 1'b0;
+        ms_to_ws_bus_r <= 0;
     end
     else if (wb_ex | wb_ertn | wb_refetch) begin
         ws_valid <= 1'b0;

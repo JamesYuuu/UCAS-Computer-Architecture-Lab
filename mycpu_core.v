@@ -42,7 +42,7 @@ wire         fs_to_ds_valid;
 wire         ds_to_es_valid;
 wire         es_to_ms_valid;
 wire         ms_to_ws_valid;
-wire [64:0]  fs_to_ds_bus;
+wire [65:0]  fs_to_ds_bus;
 wire [215:0] ds_to_es_bus;
 wire [224:0] es_to_ms_bus;
 wire [217:0] ms_to_ws_bus;
@@ -324,7 +324,6 @@ WB_stage WB_stage(
     .r_v1          (r_v1           ),
     .s1_found      (s1_found       ),
     .s1_index      (s1_index       ),
-    .mem_write_asid_ehi(mem_write_asid_ehi),
     .wb_write_asid_ehi(wb_write_asid_ehi),
     .wb_refetch     (wb_refetch     ),
     .refetch_pc     (refetch_pc     )

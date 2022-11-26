@@ -23,7 +23,8 @@ module MEM_stage(
 
     output                  mem_write_asid_ehi,
     output                  mem_refetch,
-    input                   wb_refetch
+    input                   wb_refetch,
+    input                   wb_write_asid_ehi
 );
 
 wire refetch_needed;

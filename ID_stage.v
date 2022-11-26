@@ -18,8 +18,8 @@ module ID_stage(
     input           out_ms_valid,
     input           out_es_valid,
     input           ms_to_ws_valid,
-    input   [206:0] ms_to_ws_bus,
-    input   [213:0] es_to_ms_bus,
+    input   [217:0] ms_to_ws_bus,
+    input   [224:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
@@ -572,7 +572,7 @@ assign rkd_value = (rf_raddr2 == 5'b0) ? 32'b0:
                    (rf_raddr2 == ms_addr && ms_we && ms_to_ws_valid)? ms_result:
                    (rf_raddr2 == rf_waddr && rf_we && ws_valid) ? rf_wdata : rf_rdata2;
 
-assign csr_critical_change =    inst_tlb_wr     |
+assign csr_critical_change =   (inst_tlb_wr     |
                                 inst_tlb_fill   |
                                 inst_tlb_rd     |
                                 inst_csrwr      & (csr_num == 14'h0)    |
@@ -582,6 +582,6 @@ assign csr_critical_change =    inst_tlb_wr     |
                                 inst_csrxchg    & (csr_num == 14'h0)    |
                                 inst_csrxchg    & (csr_num == 14'h180)  |
                                 inst_csrxchg    & (csr_num == 14'h181)  |
-                                inst_csrxchg    & (csr_num == 14'h18);
+                                inst_csrxchg    & (csr_num == 14'h18)) & ds_valid;
 
 endmodule
