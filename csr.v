@@ -322,6 +322,9 @@ assign wb_ex_addr_err = is_adef || is_ale;
 always @(posedge clk) begin
     if (wb_ex_addr_err && wb_ex)
         csr_badv <= is_adef ? wb_pc : wb_vaddr;
+    else if (csr_we && is_csr_badv)
+        csr_badv <= csr_wmask[31:0] & csr_wvalue[31:0]
+                 | ~csr_wmask[31:0] & csr_badv;
 end
 
 // control csr_eentry_va;
@@ -438,9 +441,9 @@ assign csr_tlbelo1 = {csr_tlbelo1_ppn, 1'b0, csr_tlbelo1_g, csr_tlbelo1_mat, csr
 
 // csr_asid
 reg  [9:0]   csr_asid_asid;
-// csr_asid_asidbits = 8'b10;
+// csr_asid_asidbits = 8'd10;
 wire [31:0]  csr_asid;
-assign csr_asid = {8'b0, 8'b10, 6'b0, csr_asid_asid};
+assign csr_asid = {8'b0, 8'd10, 6'b0, csr_asid_asid};
 
 // csr_tlbrentry
 reg  [25:0]  csr_tlbrentry_pa;
