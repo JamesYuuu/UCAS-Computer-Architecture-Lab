@@ -250,27 +250,30 @@ wire [33:0] csr_data;
 wire [4:0]  csr_op;
 wire [13:0] csr_num;
 wire [14:0] csr_code;
-wire inst_csrrd;
-wire inst_csrwr;
-wire inst_csrxchg;
-wire inst_ertn;
-wire inst_syscall;
+wire        inst_csrrd;
+wire        inst_csrwr;
+wire        inst_csrxchg;
+wire        inst_ertn;
+wire        inst_syscall;
 wire [2:0]  prev_exception_op;
 wire [3:0]  next_exception_op;
 wire [31:0] data_sram_addr_error;
-wire [2:0] inst_stable_counter;
-wire inst_rdcntid;
-wire inst_rdcntvh_w;
-wire inst_rdcntvl_w;
+wire [2:0]  inst_stable_counter;
+wire        inst_rdcntid;
+wire        inst_rdcntvh_w;
+wire        inst_rdcntvl_w;
 wire        ds_has_int;
-assign next_exception_op = {prev_exception_op,ale_detected};
+
+
 assign {refetch_needed, tlb_bus, inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
 assign es_to_ms_bus = {refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+
+assign next_exception_op = {prev_exception_op,ale_detected};
 assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
 assign {csr_op,csr_num,csr_code} = csr_data;
 assign {inst_csrrd, inst_csrwr, inst_csrxchg, inst_ertn, inst_syscall} = csr_op;
 
-assign inst_rdcntid = inst_stable_counter[2];
+assign inst_rdcntid   = inst_stable_counter[2];
 assign inst_rdcntvh_w = inst_stable_counter[1];
 assign inst_rdcntvl_w = inst_stable_counter[0];
 wire [31:0] stable_counter_result;

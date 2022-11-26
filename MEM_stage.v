@@ -135,11 +135,11 @@ assign final_result = res_from_mem ? mem_result : alu_result;
 
 assign out_ms_valid = ms_valid;
 
-assign mem_write_asid_ehi = inst_tlb_rd     |
+assign mem_write_asid_ehi = (inst_tlb_rd     |
                             inst_csrwr      & (csr_num == 14'h18) |
                             inst_csrwr      & (csr_num == 14'h11) |
                             inst_csrxchg    & (csr_num == 14'h18) |
-                            inst_csrxchg    & (csr_num == 14'h11);
+                            inst_csrxchg    & (csr_num == 14'h11)) & ms_valid;
 
 assign mem_refetch = refetch_needed;
 endmodule

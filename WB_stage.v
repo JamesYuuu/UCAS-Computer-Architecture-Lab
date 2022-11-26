@@ -262,11 +262,11 @@ assign debug_wb_rf_we    = {4{rf_we}};
 assign debug_wb_rf_wnum  = rf_waddr;
 assign debug_wb_rf_wdata = rf_wdata;
 
-assign wb_write_asid_ehi =  inst_tlb_rd     | 
+assign wb_write_asid_ehi =  (inst_tlb_rd     | 
                             inst_csrwr      & (csr_num == 14'h18) |
                             inst_csrwr      & (csr_num == 14'h11) |
                             inst_csrxchg    & (csr_num == 14'h18) |
-                            inst_csrxchg    & (csr_num == 14'h11);
+                            inst_csrxchg    & (csr_num == 14'h11)) & ws_valid;
 
 assign wb_refetch = refetch_needed;
 assign refetch_pc = pc;
