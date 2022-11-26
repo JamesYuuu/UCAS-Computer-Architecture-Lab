@@ -59,12 +59,13 @@ wire [31:0]  csr_era;
 wire         has_int;
 wire [63:0]  stable_counter_value;
 
-wire mem_write_asid_ehi;
-wire wb_write_asid_ehi;
-wire csr_critical_change;
+wire         mem_write_asid_ehi;
+wire         wb_write_asid_ehi;
+wire         csr_critical_change;
 
-wire wb_refetch;
-wire mem_refetch;
+wire         wb_refetch;
+wire         mem_refetch;
+wire [31:0]  refetch_pc;
 
 // tlb
 wire  [18:0]                 s0_vppn;
@@ -163,7 +164,8 @@ IF_stage IF_stage(
     .csr_era        (csr_era        ),
     .csr_eentry     (csr_eentry     ),
     .csr_critical_change(csr_critical_change),
-    .wb_refetch     (wb_refetch     )
+    .wb_refetch     (wb_refetch     ),
+    .refetch_pc     (refetch_pc     )
 );
 // ID stage
 ID_stage ID_stage(
@@ -324,7 +326,8 @@ WB_stage WB_stage(
     .s1_index      (s1_index       ),
     .mem_write_asid_ehi(mem_write_asid_ehi),
     .wb_write_asid_ehi(wb_write_asid_ehi),
-    .wb_refetch     (wb_refetch     )
+    .wb_refetch     (wb_refetch     ),
+    .refetch_pc     (refetch_pc     )
 );
 // tlb
 tlb tlb(

@@ -62,9 +62,10 @@ module WB_stage(
     // to handle tlb inst in ex
     input               ex_inst_tlb_inv,
     input               ex_inst_tlb_srch,
-    input [4:0]         ex_op_tlb_inv,
+    input   [4:0]       ex_op_tlb_inv,
 
-    output              wb_refetch
+    output              wb_refetch,
+    output  [31:0]      refetch_pc  
 );
 
 wire        gr_we;
@@ -267,4 +268,6 @@ assign wb_write_asid_ehi =  inst_tlb_rd     |
                             inst_csrxchg    & (csr_num == 14'h11);
 
 assign wb_refetch = refetch_needed;
+assign refetch_pc = pc;
+
 endmodule

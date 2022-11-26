@@ -25,7 +25,8 @@ module IF_stage(
     input   [31:0]  csr_era,
 
     input           csr_critical_change,
-    input           wb_refetch
+    input           wb_refetch,
+    input   [31:0]  refetch_pc
 );
 
 wire refetch_needed;
@@ -115,7 +116,8 @@ begin
     end
 end
     
-assign nextpc       =   wb_ex       ? csr_eentry :
+assign nextpc       =   wb_refetch  ? refetch_pc :
+                        wb_ex       ? csr_eentry :
                         wb_ertn     ? csr_era   :
                         preif_current_state[3] | preif_current_state[4] ? nextpc_r :  // br or wb_ex wait for addr_ok
                         br_taken    ? br_target : seq_pc;
@@ -179,7 +181,7 @@ begin
     begin
         if(handshake)
         begin
-            if (br_taken | wb_ex | wb_ertn)            
+            if (br_taken | wb_ex | wb_ertn | wb_refetch)            
             begin
                 preif_next_state <= s4;
             end
@@ -190,7 +192,7 @@ begin
         end
         else
         begin
-            if(br_taken | wb_ex | wb_ertn)
+            if(br_taken | wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s3;
             end
@@ -204,7 +206,7 @@ begin
     begin   
         if((inst_sram_data_ok | inst_buff_valid) & fs_allowin)
         begin
-            if (wb_ex | wb_ertn)
+            if (wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s3;
             end
@@ -215,7 +217,7 @@ begin
         end
         else 
         begin
-            if (wb_ex | wb_ertn)
+            if (wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s4;
             end
@@ -229,7 +231,7 @@ begin
     begin
         if(inst_sram_data_ok)
         begin
-            if (wb_ex || wb_ertn)
+            if (wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s3;
             end
@@ -240,7 +242,7 @@ begin
         end
         else 
         begin
-            if (wb_ex || wb_ertn)
+            if (wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s4;
             end
@@ -254,7 +256,7 @@ begin
     begin   
         if(handshake)
         begin
-            if (wb_ex || wb_ertn)
+            if (wb_ex | wb_ertn | wb_refetch)
             begin
                 preif_next_state <= s4;
             end
