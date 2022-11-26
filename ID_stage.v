@@ -163,7 +163,7 @@ assign op_19_15  = ds_inst[19:15];
 assign rd   = ds_inst[ 4: 0];
 assign rj   = ds_inst[ 9: 5];
 assign rk   = ds_inst[14:10];
-assign op_tlb_inv = ds_inst[4:0];  
+assign op_tlb_inv = ds_inst[4:0]; 
 
 assign i12  = ds_inst[21:10];
 assign i20  = ds_inst[24: 5];
@@ -226,6 +226,7 @@ wire inst_tlb_wr;
 wire inst_tlb_fill;
 wire inst_tlb_rd;
 wire inst_tlb_inv;
+wire inst_tlb_inv_valid;
 wire [9:0] tlb_bus;
 
 assign inst_slti    = op_31_26_d[6'b000000] & op_25_22_d[4'b1000];
@@ -259,6 +260,13 @@ assign inst_tlb_inv     = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20
 
 assign tlb_bus = {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv};
 assign inst_tlb = inst_tlb_srch | inst_tlb_rd | inst_tlb_wr | inst_tlb_fill | inst_tlb_inv;
+assign inst_tlb_inv_valid = ((op_tlb_inv == 5'd0)
+                          || (op_tlb_inv == 5'd1)
+                          || (op_tlb_inv == 5'd2)
+                          || (op_tlb_inv == 5'd3)
+                          || (op_tlb_inv == 5'd4)
+                          || (op_tlb_inv == 5'd5)
+                          || (op_tlb_inv == 5'd6)) & inst_tlb_inv;
 
 wire need_ui12;
 wire rj_eq_rd;
@@ -320,65 +328,65 @@ assign inst_ertn = op_31_26_d[6'b000001] & op_25_22_d[4'b1001] & op_21_20_d[2'b0
 assign csr_num = ds_inst[23:10];
 
 assign ine_detected = ~(
-                            inst_add_w      |
-                            inst_sub_w      |
-                            inst_slt        |
-                            inst_sltu       |
-                            inst_nor        |
-                            inst_and        |
-                            inst_or         |
-                            inst_xor        |
-                            inst_slli_w     |
-                            inst_srli_w     |
-                            inst_srai_w     |
-                            inst_addi_w     |
-                            inst_ld_w       |
-                            inst_st_w       |
-                            inst_jirl       |
-                            inst_b          |
-                            inst_bl         |
-                            inst_beq        |
-                            inst_bne        |
-                            inst_lu12i_w    |
-                            inst_slti       |
-                            inst_sltui      |
-                            inst_andi       |
-                            inst_ori        |
-                            inst_xori       |
-                            inst_sll_w      |
-                            inst_srl_w      |
-                            inst_sra_w      |
-                            inst_mul_w      |
-                            inst_mulh_w     |
-                            inst_mulh_wu    |
-                            inst_div_w      |
-                            inst_mod_w      |
-                            inst_div_wu     |
-                            inst_mod_wu     |
-                            inst_blt        |
-                            inst_bge        |
-                            inst_bltu       |
-                            inst_bgeu       |
-                            inst_ld_b       |
-                            inst_ld_h       |
-                            inst_ld_bu      |
-                            inst_ld_hu      |
-                            inst_st_b       |
-                            inst_st_h       |
-                            inst_csrrd      |
-                            inst_csrwr      |
-                            inst_csrxchg    |
-                            inst_ertn       |
-                            inst_syscall    |
-                            inst_break      |
-                            inst_rdcntid    |
-                            inst_rdcntvh_w  |
-                            inst_rdcntvl_w  |
-                            inst_pcaddu12i  |
-                            inst_tlb_fill   |
-                            inst_tlb_inv    |
-                            inst_tlb_rd     |
-                            inst_tlb_srch   |
+                            inst_add_w          |
+                            inst_sub_w          |
+                            inst_slt            |
+                            inst_sltu           |
+                            inst_nor            |
+                            inst_and            |
+                            inst_or             |
+                            inst_xor            |
+                            inst_slli_w         |
+                            inst_srli_w         |
+                            inst_srai_w         |
+                            inst_addi_w         |
+                            inst_ld_w           |
+                            inst_st_w           |
+                            inst_jirl           |
+                            inst_b              |
+                            inst_bl             |
+                            inst_beq            |
+                            inst_bne            |
+                            inst_lu12i_w        |
+                            inst_slti           |
+                            inst_sltui          |
+                            inst_andi           |
+                            inst_ori            |
+                            inst_xori           |
+                            inst_sll_w          |
+                            inst_srl_w          |
+                            inst_sra_w          |
+                            inst_mul_w          |
+                            inst_mulh_w         |
+                            inst_mulh_wu        |
+                            inst_div_w          |
+                            inst_mod_w          |
+                            inst_div_wu         |
+                            inst_mod_wu         |
+                            inst_blt            |
+                            inst_bge            |
+                            inst_bltu           |
+                            inst_bgeu           |
+                            inst_ld_b           |
+                            inst_ld_h           |
+                            inst_ld_bu          |
+                            inst_ld_hu          |
+                            inst_st_b           |
+                            inst_st_h           |
+                            inst_csrrd          |
+                            inst_csrwr          |
+                            inst_csrxchg        |
+                            inst_ertn           |
+                            inst_syscall        |
+                            inst_break          |
+                            inst_rdcntid        |
+                            inst_rdcntvh_w      |
+                            inst_rdcntvl_w      |
+                            inst_pcaddu12i      |
+                            inst_tlb_fill       |
+                            inst_tlb_inv_valid  |
+                            inst_tlb_rd         |
+                            inst_tlb_srch       |
                             inst_tlb_wr
 );
 
