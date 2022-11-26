@@ -63,6 +63,8 @@ module WB_stage(
     input               ex_inst_tlb_inv,
     input               ex_inst_tlb_srch,
     input   [4:0]       ex_op_tlb_inv,
+    output  [31:0]      csr_asid,
+    output  [31:0]      csr_tlbehi,
 
     output              wb_refetch,
     output  [31:0]      refetch_pc  
@@ -253,7 +255,9 @@ csr csr(
     .r_d1                   (r_d1           ),
     .r_v1                   (r_v1           ),
     .s1_found               (s1_found       ),
-    .s1_index               (s1_index       )
+    .s1_index               (s1_index       ),
+    .csr_asid               (csr_asid       ),
+    .csr_tlbehi             (csr_tlbehi     )
 );
 
 // debug info generate

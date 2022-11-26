@@ -11,31 +11,38 @@ module EXE_stage(
     output              es_to_ms_valid,
     output  [224:0]     es_to_ms_bus,
     // data sram interface
-    output          data_sram_req,       // if there is a request
-    output          data_sram_wr,        // read or write    1 means write and 0 means read
-    output  [3:0]   data_sram_wstrb,     // write strobes
-    output  [1:0]   data_sram_size,      // number of bytes  0:1 bytes 1:2bytes 2:4bytes
-    output  [31:0]  data_sram_addr,      // request addr
-    output  [31:0]  data_sram_wdata,     // write data
-    input           data_sram_addr_ok,   // if data and addr has been received
+    output              data_sram_req,       // if there is a request
+    output              data_sram_wr,        // read or write    1 means write and 0 means read
+    output  [3:0]       data_sram_wstrb,     // write strobes
+    output  [1:0]       data_sram_size,      // number of bytes  0:1 bytes 1:2bytes 2:4bytes
+    output  [31:0]      data_sram_addr,      // request addr
+    output  [31:0]      data_sram_wdata,     // write data
+    input               data_sram_addr_ok,   // if data and addr has been received
     // output es_valid and bus for ID stage
-    output          out_es_valid,
+    output              out_es_valid,
     // interrupt signal
-    input           wb_ex,
-    input           mem_ex,
-    input           wb_ertn,
-    input           mem_ertn,
-    input [63:0]    stable_counter_value,
+    input               wb_ex,
+    input               mem_ex,
+    input               wb_ertn,
+    input               mem_ertn,
+    input [63:0]        stable_counter_value,
 
-    output          ex_inst_tlb_srch,
-    output          ex_inst_tlb_inv,
-    output [4:0]    ex_op_tlb_inv,
+    // output for tlb
+    input  [31:0]       csr_asid,
+    input  [31:0]       csr_tlbehi,
+    output              ex_inst_tlb_srch,
+    output              ex_inst_tlb_inv,
+    output [4:0]        ex_op_tlb_inv,
+    output [9:0]        s1_asid,
+    output [18:0]       s1_vppn,
+    output              s1_va_bit12,
 
-    input           wb_write_asid_ehi,
-    input           mem_write_asid_ehi,
+
+    input               wb_write_asid_ehi,
+    input               mem_write_asid_ehi,
     
-    input           mem_refetch,
-    input           wb_refetch
+    input               mem_refetch,
+    input               wb_refetch
 );
 
 wire ale_detected;
@@ -320,5 +327,10 @@ assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetc
 assign data_sram_size  = size;
 assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 
+
+// FIXME
+assign s1_asid = ex_inst_tlb_srch ? csr_asid[9:0] : 10'b0;
+assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] : 19'b0;
+assign s1_va_bit12 = 1'b0;
 
 endmodule

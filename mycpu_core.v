@@ -67,6 +67,9 @@ wire         wb_refetch;
 wire         mem_refetch;
 wire [31:0]  refetch_pc;
 
+wire [31:0]  csr_asid;
+wire [31:0]  csr_tlbehi;
+
 // tlb
 wire  [18:0]                 s0_vppn;
 wire                         s0_va_bit12;
@@ -233,7 +236,12 @@ EXE_stage EXE_stage(
     .mem_write_asid_ehi     (mem_write_asid_ehi     ),
     .wb_write_asid_ehi      (wb_write_asid_ehi      ),
     .wb_refetch             (wb_refetch             ),
-    .mem_refetch            (mem_refetch            )
+    .mem_refetch            (mem_refetch            ),
+    .csr_asid               (csr_asid               ),
+    .csr_tlbehi             (csr_tlbehi             ),
+    .s1_asid                (s1_asid                ),
+    .s1_vppn                (s1_vppn                ),
+    .s1_va_bit12            (s1_va_bit12            )
 );
 // MEM stage
 MEM_stage MEM_stage(
@@ -328,7 +336,9 @@ WB_stage WB_stage(
     .s1_index               (s1_index               ),
     .wb_write_asid_ehi      (wb_write_asid_ehi      ),
     .wb_refetch             (wb_refetch             ),
-    .refetch_pc             (refetch_pc             )
+    .refetch_pc             (refetch_pc             ),
+    .csr_asid               (csr_asid               ),
+    .csr_tlbehi             (csr_tlbehi             )
 );      
 // tlb      
 tlb tlb(        

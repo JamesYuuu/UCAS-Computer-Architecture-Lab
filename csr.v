@@ -56,7 +56,10 @@ module csr(
     output             w_d1,
     output             w_v1,
     input              s1_found,
-    input   [3:0]      s1_index
+    input   [3:0]      s1_index,
+    // output for tlb_srch
+    output  [31:0]     csr_asid,
+    output  [31:0]     csr_tlbehi
 );
 
 // inst_tlb;
@@ -416,7 +419,6 @@ assign csr_tlbidx = {csr_tlbidx_ne, 1'b0 , csr_tlbidx_ps, 20'b0, csr_tlbidx_inde
 
 // csr_tlbehi
 reg  [18:0]  csr_tlbehi_vppn;
-wire [31:0]  csr_tlbehi;
 assign csr_tlbehi = {csr_tlbehi_vppn, 13'b0};
 
 // csr_tlbelo0
@@ -442,7 +444,6 @@ assign csr_tlbelo1 = {csr_tlbelo1_ppn, 1'b0, csr_tlbelo1_g, csr_tlbelo1_mat, csr
 // csr_asid
 reg  [9:0]   csr_asid_asid;
 // csr_asid_asidbits = 8'd10;
-wire [31:0]  csr_asid;
 assign csr_asid = {8'b0, 8'd10, 6'b0, csr_asid_asid};
 
 // csr_tlbrentry
