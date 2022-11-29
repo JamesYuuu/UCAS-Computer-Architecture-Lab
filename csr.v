@@ -164,14 +164,12 @@ reg          csr_crmd_da;
 reg          csr_crmd_pg;
 reg  [1:0]   csr_crmd_datf;
 reg  [1:0]   csr_crmd_datm;
-// assign csr_crmd = {23'b0 , csr_crmd_datm, csr_crmd_datf, csr_crmd_pg, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
-assign csr_crmd = {28'b0,csr_crmd_da,csr_crmd_ie,csr_crmd_plv};
+assign csr_crmd = {23'b0 , csr_crmd_datm, csr_crmd_datf, csr_crmd_pg, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
 
 // csr_prmd;
 reg  [1:0]   csr_prmd_pplv;
 reg          csr_prmd_pie;
 wire [31:0]  csr_prmd;
-// assign csr_prmd = {29'b0, csr_prmd_pie, csr_prmd_pplv};
 assign csr_prmd = {29'b0, csr_prmd_pie, csr_prmd_pplv};
 
 // csr_ecfg;
@@ -237,25 +235,43 @@ assign stable_counter_value = stable_counter_r;
 // control csr_crmd_plv and csr_crmd_ie and csr_crmd_da;
 always @(posedge clk) begin
     if (reset)  begin
-        csr_crmd_plv <= 2'b0;
-        csr_crmd_ie <= 1'b0;
+        csr_crmd_plv  <= 2'b0;
+        csr_crmd_ie   <= 1'b0;
+        csr_crmd_da   <= 1'b1;
+        csr_crmd_pg   <= 1'b0;
+        csr_crmd_datf <= 2'b0;
+        csr_crmd_datm <= 2'b0; 
     end
     else if (wb_ex) begin
         csr_crmd_plv <= 2'b0;
-        csr_crmd_ie <= 1'b0;
+        csr_crmd_ie  <= 1'b0;
+        if (is_tlbr) begin
+            csr_crmd_da <= 1'b1;
+            csr_crmd_pg <= 1'b0;
+        end
     end
     else if (ertn_flush) begin
         csr_crmd_plv <= csr_prmd_pplv;
-        csr_crmd_ie <= csr_prmd_pie;
+        csr_crmd_ie  <= csr_prmd_pie;
+        if (csr_estat_ecode == 6'h3F) begin  //tlb_refill
+            csr_crmd_da <= 1'b0;
+            csr_crmd_pg <= 1'b1;
+        end
     end
     else if (csr_we && is_csr_crmd) begin
-        csr_crmd_plv <= csr_wmask[1:0] & csr_wvalue[1:0]
-                     | ~csr_wmask[1:0] & csr_crmd_plv;
-        csr_crmd_ie  <= csr_wmask[2] & csr_wvalue[2]
-                     | ~csr_wmask[2] & csr_crmd_ie;
+        csr_crmd_plv  <= csr_wmask[1:0] & csr_wvalue[1:0]
+                      | ~csr_wmask[1:0] & csr_crmd_plv;
+        csr_crmd_ie   <= csr_wmask[2] & csr_wvalue[2]
+                      | ~csr_wmask[2] & csr_crmd_ie;
+        csr_crmd_da   <= csr_wmask[3] & csr_wvalue[3]
+                      | ~csr_wmask[3] & csr_crmd_da;
+        csr_crmd_pg   <= csr_wmask[4] & csr_wvalue[4]
+                      | ~csr_wmask[4] & csr_crmd_pg;
+        csr_crmd_datf <= csr_wmask[6:5] & csr_wvalue[6:5]
+                      | ~csr_wmask[6:5] & csr_crmd_datf;
+        csr_crmd_datm <= csr_wmask[8:7] & csr_wvalue[8:7]
+                      | ~csr_wmask[8:7] & csr_crmd_datm;
     end
-
-    csr_crmd_da <= 1'b1;
 end
 
 // control csr_prmd_pplv and csr_prmd_pie;
@@ -324,7 +340,7 @@ always @(posedge clk) begin
 end
 
 // control csr_badv_vaddr
-assign wb_ex_addr_err = is_adef || is_ale;
+assign wb_ex_addr_err = is_adef || is_ale || is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi;
 always @(posedge clk) begin
     if (wb_ex_addr_err && wb_ex)
         csr_badv <= is_adef ? wb_pc : wb_vaddr;
