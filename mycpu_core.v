@@ -169,9 +169,23 @@ IF_stage IF_stage(
     .csr_critical_change    (csr_critical_change    ),
     .wb_refetch             (wb_refetch             ),
     .refetch_pc             (refetch_pc             ),
+    // csr
     .csr_dmw0               (csr_dmw0               ),
     .csr_dmw1               (csr_dmw1               ),
-    .csr_crmd               (csr_crmd               )
+    .csr_crmd               (csr_crmd               ),
+    .csr_asid               (csr_asid               ),
+    // search port 0 (for fetch)   
+    .s0_vppn                (s0_vppn                ),
+    .s0_va_bit12            (s0_va_bit12            ),
+    .s0_asid                (s0_asid                ),
+    .s0_found               (s0_found               ),
+    .s0_index               (s0_index               ),
+    .s0_ppn                 (s0_ppn                 ),  
+    .s0_ps                  (s0_ps                  ),
+    .s0_plv                 (s0_plv                 ),
+    .s0_mat                 (s0_mat                 ),
+    .s0_d                   (s0_d                   ),
+    .s0_v                   (s0_v                   )
 );  
 // ID stage 
 ID_stage ID_stage(  
@@ -232,7 +246,7 @@ EXE_stage EXE_stage(
     .mem_ex                 (mem_ex                 ),
     .mem_ertn               (mem_ertn               ),
     .stable_counter_value   (stable_counter_value   ),
-
+    // tlb
     .invtlb_valid           (invtlb_valid           ),
     .ex_inst_tlb_srch       (ex_inst_tlb_srch       ),
     .invtlb_op              (invtlb_op              ),
@@ -240,14 +254,24 @@ EXE_stage EXE_stage(
     .wb_write_asid_ehi      (wb_write_asid_ehi      ),
     .wb_refetch             (wb_refetch             ),
     .mem_refetch            (mem_refetch            ),
+    // csr
     .csr_asid               (csr_asid               ),
     .csr_tlbehi             (csr_tlbehi             ),
-    .s1_asid                (s1_asid                ),
-    .s1_vppn                (s1_vppn                ),
-    .s1_va_bit12            (s1_va_bit12            ),
     .csr_dmw0               (csr_dmw0               ),
     .csr_dmw1               (csr_dmw1               ),
-    .csr_crmd               (csr_crmd               )
+    .csr_crmd               (csr_crmd               ),
+    // search port 1 (for load/store) 
+    .s1_vppn                (s1_vppn                ),
+    .s1_va_bit12            (s1_va_bit12            ),
+    .s1_asid                (s1_asid                ),
+    .s1_found               (s1_found               ),
+    .s1_index               (s1_index               ),
+    .s1_ppn                 (s1_ppn                 ),
+    .s1_ps                  (s1_ps                  ),
+    .s1_plv                 (s1_plv                 ),
+    .s1_mat                 (s1_mat                 ),
+    .s1_d                   (s1_d                   ),
+    .s1_v                   (s1_v                   )
 );
 // MEM stage
 MEM_stage MEM_stage(

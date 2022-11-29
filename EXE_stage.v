@@ -36,7 +36,14 @@ module EXE_stage(
     output [9:0]        s1_asid,
     output [18:0]       s1_vppn,
     output              s1_va_bit12,
-
+    input               s1_found,
+    input               s1_index,
+    input               s1_ppn,
+    input               s1_ps,
+    input               s1_plv,
+    input               s1_mat,
+    input               s1_d,
+    input               s1_v,
 
     input               wb_write_asid_ehi,
     input               mem_write_asid_ehi,
@@ -346,10 +353,10 @@ assign data_sram_addr  = alu_result;
 assign data_sram_wdata = st_data; 
 
 // FIXME
-assign s1_asid = ex_inst_tlb_srch ? csr_asid[9:0] : 
-                 inst_tlb_inv ? rj_value[9:0] : 10'b0;
+assign s1_asid = inst_tlb_inv ? rj_value[9:0] : csr_asid[9:0];
 assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] : 
-                 inst_tlb_inv ? rkd_value[31:13]: 19'b0;
-assign s1_va_bit12 = rkd_value[12];
+                 inst_tlb_inv ? rkd_value[31:13]: alu_result[31:13];
+assign s1_va_bit12 = inst_tlb_inv ? rkd_value[12] :
+                     ex_inst_tlb_srch ? 1'b0: alu_result[12];
 
 endmodule

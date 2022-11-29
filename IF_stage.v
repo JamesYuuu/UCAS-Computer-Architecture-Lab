@@ -28,9 +28,22 @@ module IF_stage(
     input           wb_refetch,
     input   [31:0]  refetch_pc,
     // to do address translation
-    input   [31:0]      csr_dmw0,
-    input   [31:0]      csr_dmw1,
-    input   [31:0]      csr_crmd
+    input   [31:0]  csr_dmw0,
+    input   [31:0]  csr_dmw1,
+    input   [31:0]  csr_crmd,
+    input   [31:0]  csr_asid,
+    // output for tlb
+    output [9:0]    s0_asid,
+    output [18:0]   s0_vppn,
+    output          s0_va_bit12,
+    input           s0_found,
+    input           s0_index,
+    input           s0_ppn,
+    input           s0_ps,
+    input           s0_plv,
+    input           s0_mat,
+    input           s0_d,
+    input           s0_v
 );
 
 wire using_page_table;
@@ -299,4 +312,10 @@ begin
         end
     end
 end
+
+assign s0_asid = csr_asid[9:0];
+assign s0_vppn = nextpc[31:13];
+assign s0_va_bit12 = nextpc[12];
+
 endmodule
+
