@@ -33,6 +33,18 @@ module IF_stage(
     input   [31:0]      csr_crmd
 );
 
+wire using_page_table;
+wire [31:0] translator_addr;
+translator translator_if
+(
+    .csr_dmw0(csr_dmw0),
+    .csr_dmw1(csr_dmw1),
+    .csr_crmd(csr_crmd),
+    
+    .using_page_table(using_page_table),
+    .physical_addr   (translator_addr)
+);
+
 wire refetch_needed;
 
 wire handshake;
