@@ -65,7 +65,12 @@ module WB_stage(
     output  [31:0]      csr_tlbehi,
 
     output              wb_refetch,
-    output  [31:0]      refetch_pc  
+    output  [31:0]      refetch_pc,
+
+    // to do address transilation
+    output  [31:0]      csr_dmw0,
+    output  [31:0]      csr_dmw1,
+    output  [31:0]      csr_crmd
 );
 
 wire        gr_we;
@@ -255,7 +260,10 @@ csr csr(
     .s1_found               (s1_found       ),
     .s1_index               (s1_index       ),
     .csr_asid               (csr_asid       ),
-    .csr_tlbehi             (csr_tlbehi     )
+    .csr_tlbehi             (csr_tlbehi     ),
+    .csr_dmw0               (csr_dmw0       ),
+    .csr_dmw1               (csr_dmw1       ),
+    .csr_crmd               (csr_crmd       )
 );
 
 // debug info generate

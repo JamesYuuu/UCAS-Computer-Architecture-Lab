@@ -59,7 +59,11 @@ module csr(
     input   [3:0]      s1_index,
     // output for tlb_srch
     output  [31:0]     csr_asid,
-    output  [31:0]     csr_tlbehi
+    output  [31:0]     csr_tlbehi,
+    // to do address translate
+    output  [31:0]      csr_dmw0,
+    output  [31:0]      csr_dmw1,
+    output  [31:0]      csr_crmd
 );
 
 // inst_tlb;
@@ -160,7 +164,6 @@ reg          csr_crmd_da;
 reg          csr_crmd_pg;
 reg  [1:0]   csr_crmd_datf;
 reg  [1:0]   csr_crmd_datm;
-wire [31:0]  csr_crmd;
 // assign csr_crmd = {23'b0 , csr_crmd_datm, csr_crmd_datf, csr_crmd_pg, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
 assign csr_crmd = {28'b0,csr_crmd_da,csr_crmd_ie,csr_crmd_plv};
 
@@ -457,7 +460,6 @@ reg          csr_dmw0_plv3;
 reg  [1:0]   csr_dmw0_mat;
 reg  [2:0]   csr_dmw0_pseg;
 reg  [2:0]   csr_dmw0_vseg;
-wire [31:0]  csr_dmw0;
 assign csr_dmw0 = {csr_dmw0_vseg, 1'b0, csr_dmw0_pseg, 19'b0, csr_dmw0_mat, csr_dmw0_plv3, 2'b0, csr_dmw0_plv0};
 
 // csr_dmw1;
@@ -466,7 +468,6 @@ reg          csr_dmw1_plv3;
 reg  [1:0]   csr_dmw1_mat;
 reg  [2:0]   csr_dmw1_pseg;
 reg  [2:0]   csr_dmw1_vseg;
-wire [31:0]  csr_dmw1;
 assign csr_dmw1 = {csr_dmw1_vseg, 1'b0, csr_dmw1_pseg, 19'b0, csr_dmw1_mat, csr_dmw1_plv3, 2'b0, csr_dmw1_plv0};
 
 // control csr_tlbidx

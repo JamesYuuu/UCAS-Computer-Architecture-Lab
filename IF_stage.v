@@ -26,7 +26,11 @@ module IF_stage(
 
     input           csr_critical_change,
     input           wb_refetch,
-    input   [31:0]  refetch_pc
+    input   [31:0]  refetch_pc,
+    // to do address translation
+    input   [31:0]      csr_dmw0,
+    input   [31:0]      csr_dmw1,
+    input   [31:0]      csr_crmd
 );
 
 wire refetch_needed;

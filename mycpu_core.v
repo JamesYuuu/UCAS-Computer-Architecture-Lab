@@ -135,6 +135,10 @@ wire                         r_v1;
 
 wire                         ex_inst_tlb_srch;
 
+// to do address translation
+wire    [31:0]              csr_dmw0;
+wire    [31:0]              csr_dmw1;
+wire    [31:0]              csr_crmd;
 
 // IF stage
 IF_stage IF_stage(
@@ -164,7 +168,10 @@ IF_stage IF_stage(
     .csr_eentry             (csr_eentry             ),
     .csr_critical_change    (csr_critical_change    ),
     .wb_refetch             (wb_refetch             ),
-    .refetch_pc             (refetch_pc             )
+    .refetch_pc             (refetch_pc             ),
+    .csr_dmw0               (csr_dmw0               ),
+    .csr_dmw1               (csr_dmw1               ),
+    .csr_crmd               (csr_crmd               )
 );  
 // ID stage 
 ID_stage ID_stage(  
@@ -237,7 +244,10 @@ EXE_stage EXE_stage(
     .csr_tlbehi             (csr_tlbehi             ),
     .s1_asid                (s1_asid                ),
     .s1_vppn                (s1_vppn                ),
-    .s1_va_bit12            (s1_va_bit12            )
+    .s1_va_bit12            (s1_va_bit12            ),
+    .csr_dmw0               (csr_dmw0               ),
+    .csr_dmw1               (csr_dmw1               ),
+    .csr_crmd               (csr_crmd               )
 );
 // MEM stage
 MEM_stage MEM_stage(

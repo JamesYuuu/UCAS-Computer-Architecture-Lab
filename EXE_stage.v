@@ -42,7 +42,11 @@ module EXE_stage(
     input               mem_write_asid_ehi,
     
     input               mem_refetch,
-    input               wb_refetch
+    input               wb_refetch,
+    // to do address translation
+    input   [31:0]      csr_dmw0,
+    input   [31:0]      csr_dmw1,
+    input   [31:0]      csr_crmd
 );
 
 wire ale_detected;
