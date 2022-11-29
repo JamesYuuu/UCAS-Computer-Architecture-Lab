@@ -51,6 +51,7 @@ module EXE_stage(
 
 wire using_page_table;
 wire [31:0] translator_addr;
+wire [31:0] tlb_addr;
 translator translator_if
 (
     .csr_dmw0(csr_dmw0),
