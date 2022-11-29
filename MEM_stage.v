@@ -6,10 +6,10 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [224:0]    es_to_ms_bus,
+    input   wire [230:0]    es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
-    output  wire [217:0]    ms_to_ws_bus,
+    output  wire [223:0]    ms_to_ws_bus,
     // data sram interface
     input   wire [31:0]     data_sram_rdata,     // read data
     input                   data_sram_data_ok,   // if data has been written or given back
@@ -40,7 +40,7 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg [224:0] es_to_ms_bus_r;
+reg [230:0] es_to_ms_bus_r;
 wire        ds_has_int;
 wire        mem_re;
 wire        mem_we;
@@ -78,6 +78,9 @@ wire [31:0] rj_value;
 wire [31:0] rkd_value;
 wire [31:0] data_sram_addr_error;
 wire [3:0]  exception_op;
+wire [5:0]  tlb_exception;
+wire tlb_ex;
+assign tlb_ex = tlb_exception[5] | tlb_exception[4] | tlb_exception[3] | tlb_exception[2] | tlb_exception[1] | tlb_exception[0];
 
 wire [9:0]  tlb_bus;
 wire inst_tlb_fill;
@@ -88,7 +91,7 @@ wire inst_tlb_inv;
 wire [4:0] op_tlb_inv;
 
 wire inst_rdcntid;
-assign {refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
+assign {tlb_exception,refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
 assign ms_to_ws_bus={refetch_needed, refetch_needed, tlb_bus, mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
 wire [4:0]  csr_op;
@@ -104,7 +107,7 @@ assign {csr_op,csr_num,csr_code} = csr_data;
 assign {inst_csrrd, inst_csrwr, inst_csrxchg, inst_ertn, inst_syscall} = csr_op;
 assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
 
-assign mem_ex = inst_syscall | exception_op[3] | exception_op[2] | exception_op[1] | exception_op[0];       // note that csr_data[29] means inst_syscall
+assign mem_ex = tlb_ex | inst_syscall | exception_op[3] | exception_op[2] | exception_op[1] | exception_op[0];       // note that csr_data[29] means inst_syscall
 assign mem_ertn = inst_ertn;                                                                             // note that csr_data[30] means inst_ertn
 
 //bobbbbbbbbbby add below

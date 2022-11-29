@@ -6,10 +6,10 @@ module EXE_stage(
     output              es_allowin,
     // input from ID stage
     input               ds_to_es_valid,
-    input   [215:0]     ds_to_es_bus,
+    input   [218:0]     ds_to_es_bus,
     // output for MEM stage
     output              es_to_ms_valid,
-    output  [224:0]     es_to_ms_bus,
+    output  [230:0]     es_to_ms_bus,
     // data sram interface
     output              data_sram_req,       // if there is a request
     output              data_sram_wr,        // read or write    1 means write and 0 means read
@@ -87,7 +87,7 @@ wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
 wire [31:0] alu_result ;
 wire [31:0] alu_result_org;
-reg [215:0] ds_to_es_bus_r;
+reg [218:0] ds_to_es_bus_r;
 
 assign alu_src1 = src1_is_pc  ? pc[31:0] : rj_value;
 assign alu_src2 = src2_is_imm ? imm : rkd_value;
@@ -295,9 +295,19 @@ wire        inst_rdcntvh_w;
 wire        inst_rdcntvl_w;
 wire        ds_has_int;
 
+// tlb
+wire [2:0]  tlb_exception_if;
+wire [5:0]  tlb_exception_ex;
+wire tlbr_ex;
+wire pil_ex;
+wire pis_ex;
+wire pif_ex;
+wire pme_ex;
+wire ppi_ex;
 
-assign {refetch_needed, tlb_bus, inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
-assign es_to_ms_bus = {refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
+
+assign {tlb_exception_if,refetch_needed, tlb_bus, inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
+assign es_to_ms_bus = {tlb_exception_ex,refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
 
 assign next_exception_op = {prev_exception_op,ale_detected};
 assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
@@ -359,4 +369,18 @@ assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] :
 assign s1_va_bit12 = inst_tlb_inv ? rkd_value[12] :
                      ex_inst_tlb_srch ? 1'b0: alu_result[12];
 
+wire tlbr_if;
+wire ppi_if;
+wire pif_if;
+assign {tlbr_if,pif_if,ppi_if} = tlb_exception_if;
+assign tlb_exception_ex = {tlbr_ex, pil_ex,pis_ex,pif_ex,pme_ex,ppi_ex};
+
+assign tlbr_ex = tlbr_if | (s1_found == 0);
+assign pil_ex  = (s1_found == 1) & (s1_v == 0) & mem_re;
+assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we;
+assign pif_ex  = pif_if;
+assign ppi_ex  = ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv);
+assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv);
+
 endmodule
+

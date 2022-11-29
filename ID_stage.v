@@ -6,10 +6,10 @@ module ID_stage(
     output          ds_allowin,
     // input from IF stage
     input           fs_to_ds_valid,
-    input   [65:0]  fs_to_ds_bus,
+    input   [68:0]  fs_to_ds_bus,
     // output for EXE stage
     output          ds_to_es_valid,
-    output  [215:0] ds_to_es_bus,
+    output  [218:0] ds_to_es_bus,
     // branch bus
     output  [33:0]  br_bus,
     // input from WB stage for reg_file
@@ -33,7 +33,7 @@ wire        refetch_needed;
 
 reg         ds_valid;
 wire        ds_ready_go;
-reg  [65:0] fs_to_ds_bus_r;
+reg  [68:0] fs_to_ds_bus_r;
 
 wire [31:0] ds_pc;
 wire [31:0] ds_inst;
@@ -496,10 +496,11 @@ assign br_taken = (   inst_beq  &&  rj_eq_rd
 assign br_target = (br_con || br_uncon) ? (ds_pc + br_offs) : /*inst_jirl*/ (rj_value + jirl_offs);
 // deal with input and output
 wire prev_exception_op;
+wire [2:0] tlb_exception;
 
 assign br_stall = !ds_ready_go && br_con;
 assign br_bus = {br_stall,br_taken,br_target};
-assign {refetch_needed, prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
+assign {tlb_exception,refetch_needed, prev_exception_op,ds_inst,ds_pc} = fs_to_ds_bus_r;
 
 assign {ws_valid,rf_we,rf_waddr,rf_wdata} = rf_bus;
 
@@ -512,7 +513,7 @@ assign divmul_op                 = {inst_mul_w,inst_mulh_w,inst_mulh_wu,inst_div
 assign ldst_op                   = {inst_ld_b,inst_ld_bu,inst_ld_h,inst_ld_hu,inst_ld_w,inst_st_b,inst_st_h,inst_st_w};
 assign next_exception_op         = {prev_exception_op,inst_break,ine_detected};
 assign inst_stable_counter       = {inst_rdcntid, inst_rdcntvh_w, inst_rdcntvl_w};
-assign ds_to_es_bus              = {refetch_needed, tlb_bus, inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
+assign ds_to_es_bus              = {tlb_exception,refetch_needed, tlb_bus, inst_stable_counter, has_int,next_exception_op,alu_op, src1_is_pc, ds_pc, rj_value, src2_is_imm, imm, rkd_value, gr_we, dest, res_from_mem, divmul_op , ldst_op ,csr_data};
 
 // assign ds_ready_go      = ! ((hazard && ((es_res_from_mem || es_csr) && es_valid) || (ms_csr && ms_valid)) || csr_hazard);
 assign ds_ready_go      = ! (hazard && ((es_res_from_mem || es_csr) && es_valid) || ((ms_ld || ms_csr) && ms_valid));

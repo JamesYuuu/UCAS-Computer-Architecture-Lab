@@ -7,7 +7,7 @@ module IF_stage(
     input   [33:0]  br_bus,
     // output to ID stage
     output          fs_to_ds_valid,
-    output  [65:0]  fs_to_ds_bus,
+    output  [68:0]  fs_to_ds_bus,
     // inst sram interface
     output          inst_sram_req,       // if there is a request
     output          inst_sram_wr,        // read or write
@@ -74,6 +74,13 @@ parameter s4 = 5'b10000;
 // to detech adef
 wire adef_detected;
 
+// to detect tlb exception
+wire [2:0] tlb_exception;
+wire tlbr_if;
+wire ppi_if;
+wire pif_if;
+assign tlb_exception = {tlbr_if,pif_if,ppi_if};
+
 // instruction buffer
 reg [31:0] inst_buff;
 reg inst_buff_valid;
@@ -101,7 +108,7 @@ assign refetch_needed = csr_critical_change;
 // signals to output for ID_stage
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
-assign fs_to_ds_bus = {refetch_needed, adef_detected,fs_inst,fs_pc};
+assign fs_to_ds_bus = {tlb_exception,refetch_needed, adef_detected,fs_inst,fs_pc};
 
 // pre-IF stage
 assign seq_pc       =   fs_pc + 3'h4;
@@ -316,6 +323,11 @@ end
 assign s0_asid = csr_asid[9:0];
 assign s0_vppn = nextpc[31:13];
 assign s0_va_bit12 = nextpc[12];
+
+assign tlbr_if = (s0_found == 0);
+assign pif_if  = (s0_found == 1) && (s0_v == 0);
+assign ppi_if  = (s0_found == 1) && (s0_v == 1) && (csr_crmd[1:0] > s0_plv);
+
 
 endmodule
 
