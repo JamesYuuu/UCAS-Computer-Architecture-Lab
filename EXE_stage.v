@@ -376,12 +376,12 @@ wire pif_if;
 assign {tlbr_if,pif_if,ppi_if} = tlb_exception_if;
 assign tlb_exception_ex = {tlbr_ex, pil_ex,pis_ex,pif_ex,pme_ex,ppi_ex};
 
-assign tlbr_ex = tlbr_if | (s1_found == 0);
-assign pil_ex  = (s1_found == 1) & (s1_v == 0) & mem_re;
-assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we;
-assign pif_ex  = pif_if;
-assign ppi_ex  = ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv);
-assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv);
+assign tlbr_ex = (tlbr_if | (s1_found == 0)) & using_page_table;
+assign pil_ex  = (s1_found == 1) & (s1_v == 0) & mem_re & using_page_table;
+assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we & using_page_table;
+assign pif_ex  = pif_if & using_page_table;
+assign ppi_ex  = (ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv)) & using_page_table;
+assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv) & using_page_table;
 
 endmodule
 
