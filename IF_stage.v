@@ -21,7 +21,7 @@ module IF_stage(
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
-    input   [31:0]  csr_eentry,
+    input   [31:0]  eentry,
     input   [31:0]  csr_era,
 
     input           csr_critical_change,
@@ -156,7 +156,7 @@ begin
 end
     
 assign nextpc       =   wb_refetch  ? refetch_pc :
-                        wb_ex       ? csr_eentry :
+                        wb_ex       ? eentry :
                         wb_ertn     ? csr_era   :
                         preif_current_state[3] | preif_current_state[4] ? nextpc_r :  // br or wb_ex wait for addr_ok
                         br_taken    ? br_target : seq_pc;

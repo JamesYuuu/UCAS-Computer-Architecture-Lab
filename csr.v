@@ -5,6 +5,7 @@ module csr(
     input   [13:0]     csr_num,
     output  [31:0]     csr_rvalue,
     output  [31:0]     csr_eentry,
+    output  [31:0]     csr_tlbrentry,
     input              csr_we,
     input   [31:0]     csr_wmask,
     input   [31:0]     csr_wvalue,
@@ -467,7 +468,6 @@ assign csr_asid = {8'b0, 8'd10, 6'b0, csr_asid_asid};
 
 // csr_tlbrentry
 reg  [25:0]  csr_tlbrentry_pa;
-wire [31:0]  csr_tlbrentry;
 assign csr_tlbrentry = {csr_tlbrentry_pa, 6'b0};
 
 // csr_dmw0;

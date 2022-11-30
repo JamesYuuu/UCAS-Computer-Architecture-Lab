@@ -15,7 +15,7 @@ module WB_stage(
     output [31:0]       debug_wb_rf_wdata,
     // interrupt signal
     output              wb_ex,
-    output [31:0]       csr_eentry,
+    output [31:0]       eentry,
     output [31:0]       csr_era,
     output              wb_ertn,
     output [63:0]       stable_counter_value,
@@ -133,12 +133,15 @@ wire [4:0] op_tlb_inv;
 wire [3:0] inst_tlb_op;
 
 wire [5:0] tlb_exception;
+wire  tlb_ex;
 wire  tlbr;
 wire  pil;
 wire  pis;
 wire  pif;
 wire  pme;
 wire  ppi;
+
+assign tlb_ex = tlbr | pil | pis | pif | pme | ppi;
 
 assign  {csr_op,csr_num,csr_code}=csr_data;
 assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall} = csr_op;
@@ -178,7 +181,7 @@ assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
 assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
 
-assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int | tlbr | pil | pis | pif | pme | ppi) & ws_valid;
+assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int | tlb_ex) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
 
 assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn | inst_rdcntid;
@@ -213,6 +216,11 @@ assign csr_era = csr_rvalue;
 
 assign inst_tlb_op = {inst_tlb_fill, inst_tlb_wr, ex_inst_tlb_srch, inst_tlb_rd};
 
+wire [31:0] csr_eentry;
+wire [31:0] csr_tlbrentry;
+
+assign eentry = tlb_ex ? csr_tlbrentry : csr_eentry;
+
 csr csr(
     // csr
     .reset                  (reset               ),
@@ -221,6 +229,7 @@ csr csr(
     .csr_num                (wb_csr_num          ),
     .csr_rvalue             (csr_rvalue          ),
     .csr_eentry             (csr_eentry          ),
+    .csr_tlbrentry          (csr_tlbrentry       ),
     .csr_we                 (csr_we              ),
     .csr_wmask              (csr_wmask           ),
     .csr_wvalue             (csr_wvalue          ),

@@ -54,7 +54,7 @@ wire         wb_ex;
 wire         mem_ex;
 wire         wb_ertn;
 wire         mem_ertn;
-wire [31:0]  csr_eentry;
+wire [31:0]  eentry;
 wire [31:0]  csr_era;
 wire         has_int;
 wire [63:0]  stable_counter_value;
@@ -165,7 +165,7 @@ IF_stage IF_stage(
     .wb_ex                  (wb_ex                  ),
     .wb_ertn                (wb_ertn                ),
     .csr_era                (csr_era                ),
-    .csr_eentry             (csr_eentry             ),
+    .eentry                 (eentry                 ),
     .csr_critical_change    (csr_critical_change    ),
     .wb_refetch             (wb_refetch             ),
     .refetch_pc             (refetch_pc             ),
@@ -321,7 +321,7 @@ WB_stage WB_stage(
     .wb_ex                  (wb_ex                  ),
     .wb_ertn                (wb_ertn                ),
     .csr_era                (csr_era                ),
-    .csr_eentry             (csr_eentry             ),
+    .eentry                 (eentry                 ),
     .has_int                (has_int                ),
     .stable_counter_value   (stable_counter_value   ),
     .ex_inst_tlb_srch       (ex_inst_tlb_srch       ),
