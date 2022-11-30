@@ -69,6 +69,7 @@ translator translator_if
     .using_page_table(using_page_table),
     .physical_addr   (translator_addr)
 );
+assign tlb_addr = {s1_ppn, alu_result[11:0]};
 
 wire ale_detected;
 wire refetch_needed;
@@ -360,7 +361,7 @@ assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 :
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
 assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
-assign data_sram_addr  = using_page_table ? {s1_ppn, alu_result[11:0]} : translator_addr;
+assign data_sram_addr  = using_page_table ? tlb_addr : translator_addr;
 assign data_sram_wdata = st_data; 
 
 // FIXME
