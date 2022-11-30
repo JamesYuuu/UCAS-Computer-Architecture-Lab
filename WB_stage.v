@@ -202,8 +202,7 @@ assign wb_ecode = inst_syscall  ? 6'hb :
                   ppi           ? 6'h7:
                   6'h0;
 assign wb_esubcode = 9'b0;
-assign wb_vaddr =   adef_detected ? pc :
-                    ale_detected  ? data_sram_addr_error : 32'b0;
+assign wb_vaddr =   adef_detected ? pc : data_sram_addr_error;
 assign coreid_in      = 32'b0;
 assign ertn_flush     = inst_ertn;
 assign hw_int_in      = 8'b0;
