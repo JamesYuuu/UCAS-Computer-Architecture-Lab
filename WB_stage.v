@@ -218,7 +218,7 @@ assign inst_tlb_op = {inst_tlb_fill, inst_tlb_wr, ex_inst_tlb_srch, inst_tlb_rd}
 wire [31:0] csr_eentry;
 wire [31:0] csr_tlbrentry;
 
-assign eentry = tlb_ex ? csr_tlbrentry : csr_eentry;
+assign eentry = tlbr ? csr_tlbrentry : csr_eentry;
 
 csr csr(
     // csr
