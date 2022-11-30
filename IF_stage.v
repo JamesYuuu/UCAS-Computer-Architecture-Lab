@@ -45,12 +45,13 @@ module IF_stage(
     input           s0_d,
     input           s0_v
 );
-
+wire [31:0] nextpc;
 wire using_page_table;
 wire [31:0] translator_addr;
 wire [31:0] tlb_addr;
 translator translator_if
 (
+    .addr(nextpc),
     .csr_dmw0(csr_dmw0),
     .csr_dmw1(csr_dmw1),
     .csr_crmd(csr_crmd),
@@ -58,6 +59,7 @@ translator translator_if
     .using_page_table(using_page_table),
     .physical_addr   (translator_addr)
 );
+
 
 wire refetch_needed;
 
@@ -93,7 +95,7 @@ wire        pre_fs_ready_go;
 // signals for pc
 wire [31:0] seq_pc;
 reg [31:0] nextpc_r;
-wire [31:0] nextpc;
+
 
 // signals from branch
 wire        br_taken_ori;
@@ -189,10 +191,10 @@ always @(posedge clk) begin
     end
 end
 
-
+assign tlb_addr = {s0_ppn, nextpc[11:0]};
 // interface with sram
 assign inst_sram_req    = fs_allowin & (preif_current_state[0] | preif_current_state[3]) & ~br_stall;
-assign inst_sram_addr   = nextpc;
+assign inst_sram_addr   = using_page_table ? tlb_addr : translator_addr;
 assign inst_sram_wr     = 1'b0;
 assign inst_sram_wstrb  = 4'b0;
 assign inst_sram_size   = 2'b10;

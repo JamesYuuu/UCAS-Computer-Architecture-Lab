@@ -55,12 +55,13 @@ module EXE_stage(
     input   [31:0]      csr_dmw1,
     input   [31:0]      csr_crmd
 );
-
+wire [31:0] alu_result ;
 wire using_page_table;
 wire [31:0] translator_addr;
 wire [31:0] tlb_addr;
 translator translator_if
 (
+    .addr(alu_result),
     .csr_dmw0(csr_dmw0),
     .csr_dmw1(csr_dmw1),
     .csr_crmd(csr_crmd),
@@ -85,7 +86,7 @@ wire [31:0] imm;
 
 wire [31:0] alu_src1   ;
 wire [31:0] alu_src2   ;
-wire [31:0] alu_result ;
+
 wire [31:0] alu_result_org;
 reg [218:0] ds_to_es_bus_r;
 
@@ -359,7 +360,7 @@ assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 :
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
 assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
-assign data_sram_addr  = alu_result;
+assign data_sram_addr  = using_page_table ? {s1_ppn, alu_result[11:0]} : translator_addr;
 assign data_sram_wdata = st_data; 
 
 // FIXME
