@@ -374,7 +374,7 @@ assign data_sram_size  = size;
 assign data_sram_addr  = using_page_table ? tlb_addr : translator_addr;
 assign data_sram_wdata = st_data; 
 
-// FIXME
+// tlb interface
 assign s1_asid = inst_tlb_inv ? rj_value[9:0] : csr_asid[9:0];
 assign s1_vppn = ex_inst_tlb_srch ? csr_tlbehi[31:13] : 
                  inst_tlb_inv ? rkd_value[31:13]: alu_result[31:13];
