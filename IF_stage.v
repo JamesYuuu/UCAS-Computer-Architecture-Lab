@@ -37,11 +37,11 @@ module IF_stage(
     output [18:0]   s0_vppn,
     output          s0_va_bit12,
     input           s0_found,
-    input           s0_index,
-    input           s0_ppn,
-    input           s0_ps,
-    input           s0_plv,
-    input           s0_mat,
+    input  [3:0]    s0_index,
+    input  [19:0]   s0_ppn,
+    input  [5:0]    s0_ps,
+    input  [1:0]    s0_plv,
+    input  [1:0]    s0_mat,
     input           s0_d,
     input           s0_v
 );
