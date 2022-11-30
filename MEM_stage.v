@@ -92,7 +92,7 @@ wire [4:0] op_tlb_inv;
 
 wire inst_rdcntid;
 assign {tlb_exception,refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,alu_result,pc}=es_to_ms_bus_r;
-assign ms_to_ws_bus={tlb_exception,refetch_needed, refetch_needed, tlb_bus, mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
+assign ms_to_ws_bus={tlb_exception,refetch_needed, tlb_bus, mem_re,inst_rdcntid,data_sram_addr_error, ds_has_int,exception_op,rj_value,rkd_value,csr_data,gr_we,dest,final_result,pc};
 
 wire [4:0]  csr_op;
 wire [13:0] csr_num;
