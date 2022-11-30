@@ -135,6 +135,7 @@ wire  is_brk;
 wire  is_ine;
 
 assign is_adef = (wb_ecode == 6'h8 && wb_esubcode == 9'h0);
+assign is_adem = (wb_ecode == 6'h8 && wb_esubcode == 9'h1);
 assign is_ale  = (wb_ecode == 6'h9);
 assign is_brk  = (wb_ecode == 6'hc);
 assign is_ine  = (wb_ecode == 6'hd);
@@ -341,7 +342,7 @@ always @(posedge clk) begin
 end
 
 // control csr_badv_vaddr
-assign wb_ex_addr_err = is_adef || is_ale || is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi;
+assign wb_ex_addr_err = is_adem || is_adef || is_ale || is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi;
 always @(posedge clk) begin
     if (wb_ex_addr_err && wb_ex)
         csr_badv <= (is_adef | is_pif) ? wb_pc : wb_vaddr;

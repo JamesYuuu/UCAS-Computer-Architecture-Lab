@@ -5,7 +5,7 @@ module WB_stage(
     output              ws_allowin,
     // input from EXE stage
     input               ms_to_ws_valid,
-    input   [223:0]     ms_to_ws_bus,
+    input   [224:0]     ms_to_ws_bus,
     // output for reg_file
     output  [38:0]      rf_bus,
     // trace debug interface
@@ -100,11 +100,12 @@ wire         inst_syscall;
 wire         inst_rdcntid;
 wire         ds_has_int;
 
-wire [3:0]   exception_op;
-wire         adef_detected;
+wire [4:0]   exception_op;
+wire         adef;
+wire         adem;
 wire         inst_break;
-wire         ine_detected;
-wire         ale_detected;
+wire         ine;
+wire         ale;
 
 // needed for csr operation
 wire        csr_re;
@@ -143,9 +144,12 @@ wire  ppi;
 
 assign tlb_ex = tlbr | pil | pis | pif | pme | ppi;
 
+wire normal_ex;
+assign normal_ex = adef | adem | inst_break | ine | ale;
+
 assign  {csr_op,csr_num,csr_code}=csr_data;
 assign  {inst_csrrd,inst_csrwr,inst_csrxchg,inst_ertn,inst_syscall} = csr_op;
-assign  {adef_detected,inst_break,ine_detected,ale_detected} = exception_op;
+assign  {adef,inst_break,ine,ale,adem} = exception_op;
 assign  {tlbr,pil,pis,pif,pme,ppi} = tlb_exception;
 
 assign rf_we    = gr_we && ws_valid && ~(wb_ex) && ~(wb_refetch);
@@ -181,7 +185,7 @@ assign rf_bus={ws_valid,rf_we,rf_waddr,rf_wdata};
 
 assign {inst_tlb_fill, inst_tlb_wr, inst_tlb_srch, inst_tlb_rd, inst_tlb_inv, op_tlb_inv} = tlb_bus;
 
-assign wb_ex = (inst_syscall | inst_break | adef_detected | ine_detected | ale_detected | ds_has_int | tlb_ex) & ws_valid;
+assign wb_ex = (inst_syscall | ds_has_int | normal_ex | tlb_ex) & ws_valid;
 assign wb_ertn = inst_ertn & ws_valid;
 
 assign csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_ertn | inst_rdcntid;
@@ -189,20 +193,19 @@ assign csr_we = (inst_csrwr | inst_csrxchg) & ws_valid;
 assign csr_wmask =  inst_csrwr ? 32'hffffffff :
                     inst_csrxchg ? rj_value : 32'b0;
 assign csr_wvalue = (inst_csrwr | inst_csrxchg) ? rkd_value : 32'b0;
-assign wb_ecode = inst_syscall  ? 6'hb : 
-                  inst_break    ? 6'hc :
-                  adef_detected ? 6'h8 :
-                  ine_detected  ? 6'hd :
-                  ale_detected  ? 6'h9 :
-                  tlbr          ? 6'h3F :
-                  pil           ? 6'h1:
-                  pis           ? 6'h2:
-                  pif           ? 6'h3:
-                  pme           ? 6'h4:
-                  ppi           ? 6'h7:
-                  6'h0;
-assign wb_esubcode = 9'b0;
-assign wb_vaddr =   adef_detected ? pc : data_sram_addr_error;
+assign wb_ecode = inst_syscall ? 6'hb : 
+                  inst_break   ? 6'hc :
+                  adef | adem  ? 6'h8 :
+                  ine          ? 6'hd :
+                  ale          ? 6'h9 :
+                  tlbr         ? 6'h3F:
+                  pil          ? 6'h1 :
+                  pis          ? 6'h2 :
+                  pif          ? 6'h3 :
+                  pme          ? 6'h4 :
+                  ppi          ? 6'h7 : 6'h0;
+assign wb_esubcode    = adem ? 9'b1 : 9'b0;
+assign wb_vaddr       = adef ? pc : data_sram_addr_error;
 assign coreid_in      = 32'b0;
 assign ertn_flush     = inst_ertn;
 assign hw_int_in      = 8'b0;

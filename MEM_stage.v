@@ -6,10 +6,10 @@ module MEM_stage(
     output  wire            ms_allowin,
     // input from EXE stage
     input   wire            es_to_ms_valid,
-    input   wire [230:0]    es_to_ms_bus,
+    input   wire [231:0]    es_to_ms_bus,
     // output for WB stage
     output  wire            ms_to_ws_valid,
-    output  wire [223:0]    ms_to_ws_bus,
+    output  wire [224:0]    ms_to_ws_bus,
     // data sram interface
     input   wire [31:0]     data_sram_rdata,     // read data
     input                   data_sram_data_ok,   // if data has been written or given back
@@ -40,7 +40,7 @@ wire [31:0] alu_result;
 
 reg         ms_valid;
 wire        ms_ready_go;
-reg [230:0] es_to_ms_bus_r;
+reg [231:0] es_to_ms_bus_r;
 wire        ds_has_int;
 wire        mem_re;
 wire        mem_we;
@@ -77,7 +77,7 @@ wire [33:0] csr_data;
 wire [31:0] rj_value;
 wire [31:0] rkd_value;
 wire [31:0] data_sram_addr_error;
-wire [3:0]  exception_op;
+wire [4:0]  exception_op;
 wire [5:0]  tlb_exception;
 wire tlb_ex;
 assign tlb_ex = tlb_exception[5] | tlb_exception[4] | tlb_exception[3] | tlb_exception[2] | tlb_exception[1] | tlb_exception[0];

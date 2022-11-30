@@ -326,9 +326,9 @@ assign s0_asid = csr_asid[9:0];
 assign s0_vppn = nextpc[31:13];
 assign s0_va_bit12 = nextpc[12];
 
-assign tlbr_if = (s0_found == 0) & using_page_table;
-assign pif_if  = (s0_found == 1) & (s0_v == 0) & using_page_table;
-assign ppi_if  = (s0_found == 1) & (s0_v == 1) & (csr_crmd[1:0] > s0_plv) & using_page_table;
+assign tlbr_if = (s0_found == 0) & using_page_table & ~adef_detected;
+assign pif_if  = (s0_found == 1) & (s0_v == 0) & using_page_table & ~adef_detected;
+assign ppi_if  = (s0_found == 1) & (s0_v == 1) & (csr_crmd[1:0] > s0_plv) & using_page_table & ~adef_detected;
 
 
 endmodule
