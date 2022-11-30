@@ -300,6 +300,7 @@ wire        ds_has_int;
 // tlb
 wire [2:0]  tlb_exception_if;
 wire [5:0]  tlb_exception_ex;
+wire tlb_ex;
 wire tlbr_ex;
 wire pil_ex;
 wire pis_ex;
@@ -307,6 +308,7 @@ wire pif_ex;
 wire pme_ex;
 wire ppi_ex;
 
+assign tlb_ex = tlbr_ex || pil_ex || pis_ex || pif_ex || pme_ex || ppi_ex;
 
 assign {tlb_exception_if,refetch_needed, tlb_bus, inst_stable_counter, ds_has_int,prev_exception_op,alu_op,src1_is_pc,pc,rj_value,src2_is_imm,imm,rkd_value,gr_we,dest,res_from_mem,divmul_op,ldst_op,csr_data}=ds_to_es_bus_r;
 assign es_to_ms_bus = {tlb_exception_ex,refetch_needed, tlb_bus, mem_re,mem_we,inst_rdcntid,data_sram_addr_error, ds_has_int,next_exception_op,rj_value,rkd_value,csr_data,ld_op,res_from_mem,gr_we,dest,write_result,pc};
@@ -359,7 +361,7 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
 // data sram interface
 assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 : 1'b0;
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
-assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch) ? 4'b0 : wstrb;
+assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch || tlb_ex) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
 assign data_sram_addr  = using_page_table ? tlb_addr : translator_addr;
 assign data_sram_wdata = st_data; 
@@ -383,5 +385,6 @@ assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we & using_page_table;
 assign pif_ex  = pif_if;
 assign ppi_ex  = ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv) & (mem_re | mem_we) & using_page_table;
 assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv) & using_page_table;
+
 
 endmodule
