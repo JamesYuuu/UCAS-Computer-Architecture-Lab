@@ -547,9 +547,13 @@ always @(posedge clk) begin
             csr_tlbehi_vppn <= r_vppn;
         end
     end
-    else if (is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi)
+    else if (is_tlbr || is_pil || is_pis || is_pme || is_ppi)
     begin
         csr_tlbehi_vppn <= wb_vaddr[31:13];
+    end
+    else if (is_pif)
+    begin
+        csr_tlbehi_vppn <= wb_pc[31:13];
     end
     else if (csr_we && is_csr_tlbehi)
     begin
