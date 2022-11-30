@@ -344,7 +344,7 @@ assign invtlb_op        = op_tlb_inv;
 // deal with data_sram
 assign mem_re = inst_ld_b || inst_ld_bu || inst_ld_h || inst_ld_hu || inst_ld_w;
 assign mem_we = inst_st_b || inst_st_h || inst_st_w;
-assign addr = alu_result[1:0];
+assign addr = data_sram_addr[1:0];
 assign size = (inst_ld_w | inst_st_w) ? 2'b10 :
               (inst_ld_h | inst_ld_hu | inst_st_h) ? 2'b1 : 2'b0;
 assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
@@ -376,12 +376,11 @@ wire pif_if;
 assign {tlbr_if,pif_if,ppi_if} = tlb_exception_if;
 assign tlb_exception_ex = {tlbr_ex, pil_ex,pis_ex,pif_ex,pme_ex,ppi_ex};
 
-assign tlbr_ex = tlbr_if | (s1_found == 0);
-assign pil_ex  = (s1_found == 1) & (s1_v == 0) & mem_re;
-assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we;
+assign tlbr_ex = tlbr_if | (s1_found == 0) & using_page_table;
+assign pil_ex  = (s1_found == 1) & (s1_v == 0) & mem_re & using_page_table;
+assign pis_ex  = (s1_found == 1) & (s1_v == 0) & mem_we & using_page_table;
 assign pif_ex  = pif_if;
-assign ppi_ex  = ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv);
-assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv);
+assign ppi_ex  = ppi_if | (s1_found == 1) & (s1_v == 1) & (csr_crmd[1:0] > s1_plv) & using_page_table;
+assign pme_ex  = (s1_found == 1) & (s1_v == 1) & (s1_d == 0) & mem_we & (csr_crmd[1:0] <= s1_plv) & using_page_table;
 
 endmodule
-
