@@ -344,7 +344,7 @@ end
 assign wb_ex_addr_err = is_adef || is_ale || is_tlbr || is_pil || is_pis || is_pif || is_pme || is_ppi;
 always @(posedge clk) begin
     if (wb_ex_addr_err && wb_ex)
-        csr_badv <= is_adef ? wb_pc : wb_vaddr;
+        csr_badv <= (is_adef | is_pif) ? wb_pc : wb_vaddr;
     else if (csr_we && is_csr_badv)
         csr_badv <= csr_wmask[31:0] & csr_wvalue[31:0]
                  | ~csr_wmask[31:0] & csr_badv;
