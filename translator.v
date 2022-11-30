@@ -59,6 +59,6 @@ assign physical_addr =  direct_mode ? addr :
                         using_dmw1 ? dmw1_physical_addr : 0;
 assign using_page_table = ~direct_mode & ~using_dmw0 & ~using_dmw1;
 
-assign ade = ~using_dmw1 & ~using_dmw0 & addr[31];
+assign ade = ~using_dmw1 & ~using_dmw0 & ~direct_mode & addr[31];
 
 endmodule
