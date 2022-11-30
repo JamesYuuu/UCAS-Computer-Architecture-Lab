@@ -367,7 +367,10 @@ WB_stage WB_stage(
     .wb_refetch             (wb_refetch             ),
     .refetch_pc             (refetch_pc             ),
     .csr_asid               (csr_asid               ),
-    .csr_tlbehi             (csr_tlbehi             )
+    .csr_tlbehi             (csr_tlbehi             ),
+    .csr_dmw0               (csr_dmw0               ),
+    .csr_dmw1               (csr_dmw1               ),
+    .csr_crmd               (csr_crmd               )
 );      
 // tlb      
 tlb tlb(        

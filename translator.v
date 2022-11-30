@@ -1,12 +1,12 @@
-module addr_translator
+module translator
 (
-    input   [31:0]  addr,
-    input   [31:0]  csr_dmw0,
-    input   [31:0]  csr_dmw1,
-    input   [31:0]  csr_crmd,
+    input wire  [31:0]  addr,
+    input wire  [31:0]  csr_dmw0,
+    input wire  [31:0]  csr_dmw1,
+    input wire  [31:0]  csr_crmd,
     
-    output  [31:0]  physical_addr,
-    output  using_page_table
+    output  wire [31:0]  physical_addr,
+    output  wire using_page_table
 );
 wire crmd_da;
 wire crmd_pg;
