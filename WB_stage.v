@@ -84,7 +84,7 @@ wire [31:0] rf_wdata;
 
 reg          ws_valid;
 wire         ws_ready_go;
-reg  [223:0] ms_to_ws_bus_r;
+reg  [224:0] ms_to_ws_bus_r;
 
 wire [31:0]  data_sram_addr_error;
 wire [33:0]  csr_data;

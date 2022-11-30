@@ -361,7 +361,7 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
                (size==2'b01 && addr==2'b10) ? 4'b1100:
                (size==2'b10 && addr==2'b00) ? 4'b1111: 4'b0000;
 
-assign adem_detected = (adem) & ~ale_detected;
+assign adem_detected = adem & ~ale_detected;
 
 wire current_ex;
 assign current_ex = prev_exception_op[2] | prev_exception_op[1] | prev_exception_op[0] | ale_detected | adem_detected | tlb_ex;
