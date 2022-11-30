@@ -359,12 +359,15 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
                (size==2'b01 && addr==2'b10) ? 4'b1100:
                (size==2'b10 && addr==2'b00) ? 4'b1111: 4'b0000;
 
-assign adem_detected = (FIXME) & ~ale_detected;
+assign adem_detected = (data_sram_addr) & ~ale_detected;
+
+wire current_ex;
+assign current_ex = prev_exception_op[2] | prev_exception_op[1] | prev_exception_op[0] | ale_detected | adem_detected | tlb_ex;
 
 // data sram interface
 assign data_sram_req   = ((mem_re || mem_we) && es_valid && ms_allowin) ? 1'b1 : 1'b0;
 assign data_sram_wr    = mem_we? 1'b1 : 1'b0;
-assign data_sram_wstrb = (after_ex || after_ertn || ale_detected || after_refetch || tlb_ex) ? 4'b0 : wstrb;
+assign data_sram_wstrb = (after_ex || after_ertn || after_refetch || current_ex) ? 4'b0 : wstrb;
 assign data_sram_size  = size;
 assign data_sram_addr  = using_page_table ? tlb_addr : translator_addr;
 assign data_sram_wdata = st_data; 
