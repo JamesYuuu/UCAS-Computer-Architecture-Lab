@@ -49,6 +49,7 @@ wire [31:0] nextpc;
 wire using_page_table;
 wire [31:0] translator_addr;
 wire [31:0] tlb_addr;
+wire        adef;
 translator translator_if
 (
     .addr(nextpc),
@@ -57,7 +58,8 @@ translator translator_if
     .csr_crmd(csr_crmd),
     
     .using_page_table(using_page_table),
-    .physical_addr   (translator_addr)
+    .physical_addr   (translator_addr),
+    .ade             (adef)
 );
 
 
@@ -163,7 +165,7 @@ assign nextpc       =   wb_refetch  ? refetch_pc :
 
 assign pre_fs_ready_go = (inst_sram_req && inst_sram_addr_ok);
 
-assign adef_detected = nextpc[1:0] == 2'b00 ? 0 : 1;
+assign adef_detected = (nextpc[1:0] == 2'b00 ? 0 : 1) | adef;
 
 // IF stage
 assign fs_ready_go     = inst_sram_data_ok | inst_buff_valid;

@@ -59,6 +59,7 @@ wire [31:0] alu_result ;
 wire using_page_table;
 wire [31:0] translator_addr;
 wire [31:0] tlb_addr;
+wire adem;
 translator translator_if
 (
     .addr(alu_result),
@@ -67,7 +68,8 @@ translator translator_if
     .csr_crmd(csr_crmd),
     
     .using_page_table(using_page_table),
-    .physical_addr   (translator_addr)
+    .physical_addr   (translator_addr),
+    .ade             (adem)
 );
 assign tlb_addr = {s1_ppn, alu_result[11:0]};
 
@@ -359,7 +361,7 @@ assign wstrb = (size==2'b00 && addr==2'b00) ? 4'b0001:
                (size==2'b01 && addr==2'b10) ? 4'b1100:
                (size==2'b10 && addr==2'b00) ? 4'b1111: 4'b0000;
 
-assign adem_detected = (data_sram_addr) & ~ale_detected;
+assign adem_detected = (adem) & ~ale_detected;
 
 wire current_ex;
 assign current_ex = prev_exception_op[2] | prev_exception_op[1] | prev_exception_op[0] | ale_detected | adem_detected | tlb_ex;

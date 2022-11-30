@@ -6,7 +6,8 @@ module translator
     input wire  [31:0]  csr_crmd,
     
     output  wire [31:0]  physical_addr,
-    output  wire using_page_table
+    output  wire using_page_table,
+    output  wire ade
 );
 wire crmd_da;
 wire crmd_pg;
@@ -57,5 +58,7 @@ assign physical_addr =  direct_mode ? addr :
                         using_dmw0 ? dmw0_physical_addr :
                         using_dmw1 ? dmw1_physical_addr : 0;
 assign using_page_table = ~direct_mode & ~using_dmw0 & ~using_dmw1;
+
+assign ade = ~using_dmw1 & ~using_dmw0 & addr[31];
 
 endmodule
