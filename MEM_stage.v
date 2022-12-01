@@ -96,7 +96,6 @@ assign ms_to_ws_bus={tlb_exception,refetch_needed, tlb_bus, mem_re,inst_rdcntid,
 
 wire [4:0]  csr_op;
 wire [13:0] csr_num;
-wire [13:0] mem_csr_num;
 wire [14:0] csr_code;
 wire inst_csrrd;
 wire inst_csrwr;

@@ -18,8 +18,8 @@ module ID_stage(
     input           out_ms_valid,
     input           out_es_valid,
     input           ms_to_ws_valid,
-    input   [217:0] ms_to_ws_bus,
-    input   [224:0] es_to_ms_bus,
+    input   [224:0] ms_to_ws_bus,
+    input   [231:0] es_to_ms_bus,
     // interrupt signal
     input           wb_ex,
     input           wb_ertn,
@@ -542,7 +542,7 @@ assign es_valid = out_es_valid;
 
 assign {es_res_from_mem,es_we,es_addr,es_result} = es_to_ms_bus[70:32];
 assign {ms_we,ms_addr,ms_result} = ms_to_ws_bus[69:32];
-assign ms_ld = ms_to_ws_bus[206];
+assign ms_ld = ms_to_ws_bus[207];
 
 // read after write hazard
 assign src1_hazard = (rf_raddr1 == 5'b0) ? 1'b0:
