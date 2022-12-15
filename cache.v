@@ -129,18 +129,66 @@ wire [31:0]     way0_load_word;
 wire [31:0]     way1_load_word;
 wire [31:0]     load_res;
 
+// miss buffer
+wire [127:0]    replace_data;
+wire [19:0]     replace_tag;
+wire            replace_way; 
+
+reg  [127:0]    replace_data_r;
+reg  [19:0]     replace_tag_r;
+reg             replace_way_r;
+
+reg [1:0]       ret_data_num;       // number of returned date
+
+// LFSR
+reg  [22:0]     pseudo_random_number;
+
+// read data from cache
+wire            way0_valid;
+wire            way1_valid;
+wire [19:0]     way0_tag;
+wire [19:0]     way1_tag;
+wire [127:0]    way0_rdata;
+wire [127:0]    way1_rdata;
+
+assign way0_valid = tagv_way0_rdata[0];
+assign way1_valid = tagv_way1_rdata[0];
+assign way0_tag   = tagv_way0_rdata[20:1];
+assign way1_tag   = tagv_way1_rdata[20:1];
+assign way0_rdata = {bank3_way0_rdata, bank2_way0_rdata, bank1_way0_rdata, bank0_way0_rdata};
+assign way1_rdata = {bank3_way1_rdata, bank2_way1_rdata, bank1_way1_rdata, bank0_way1_rdata};
+
+// tag compare
+assign way0_hit  = way0_valid && (way0_tag == req_tag_r);
+assign way1_hit  = way1_valid && (way1_tag == req_tag_r);
+assign cache_hit = way0_hit || way1_hit;
+
+// data select
+assign way0_load_word = way0_rdata[req_offset_r[3:2]*32 +: 32];
+assign way1_load_word = way1_rdata[req_offset_r[3:2]*32 +: 32];
+assign load_res = way0_hit ? way0_load_word : 
+                  way1_hit ? way1_load_word : 32'b0;
+
+assign replace_data = replace_way ? way1_rdata : way0_rdata;
+assign replace_tag  = replace_way ? way1_tag   : way0_tag;
+
+// bank selection
+assign wr_bank0_hit = wr_offset_r[3:2] == 2'b00;
+assign wr_bank1_hit = wr_offset_r[3:2] == 2'b01;
+assign wr_bank2_hit = wr_offset_r[3:2] == 2'b10;
+assign wr_bank3_hit = wr_offset_r[3:2] == 2'b11;
 
 // tagv ram
 TAGV_RAM tagv_way0(
     .addra(tagv_way0_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(tagv_way0_wdata),
     .douta(tagv_way0_rdata),
     .wea(tagv_way0_wen)
     );
 TAGV_RAM tagv_way1(
     .addra(tagv_way1_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(tagv_way1_wdata),
     .douta(tagv_way1_rdata),
     .wea(tagv_way1_wen)
@@ -149,56 +197,56 @@ TAGV_RAM tagv_way1(
 // bank ram
 BANK_RAM bank0_way0(
     .addra(bank0_way0_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank0_way0_wdata),
     .douta(bank0_way0_rdata),
     .wea(bank0_way0_wen)
     );
 BANK_RAM bank1_way0(
     .addra(bank1_way0_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank1_way0_wdata),
     .douta(bank1_way0_rdata),
     .wea(bank1_way0_wen)
     );
 BANK_RAM bank2_way0(
     .addra(bank2_way0_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank2_way0_wdata),
     .douta(bank2_way0_rdata),
     .wea(bank2_way0_wen)
     );
 BANK_RAM bank3_way0(
     .addra(bank3_way0_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank3_way0_wdata),
     .douta(bank3_way0_rdata),
     .wea(bank3_way0_wen)
     );
 BANK_RAM bank0_way1(
     .addra(bank0_way1_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank0_way1_wdata),
     .douta(bank0_way1_rdata),
     .wea(bank0_way1_wen)
     );
 BANK_RAM bank1_way1(
     .addra(bank1_way1_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank1_way1_wdata),
     .douta(bank1_way1_rdata),
     .wea(bank1_way1_wen)
     );
 BANK_RAM bank2_way1(
     .addra(bank2_way1_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank2_way1_wdata),
     .douta(bank2_way1_rdata),
     .wea(bank2_way1_wen)
     );
 BANK_RAM bank3_way1(
     .addra(bank3_way1_addr),
-    .clka(clk_g),
+    .clka(clk),
     .dina(bank3_way1_wdata),
     .douta(bank3_way1_rdata),
     .wea(bank3_way1_wen)
@@ -274,6 +322,8 @@ always @(posedge clk) begin
     end
 end
 
+wire hit_write;
+assign hit_write = cache_hit & req_op_r;                
 always @(*) begin
     case (wr_state)
         WR_IDLE: begin
@@ -296,5 +346,7 @@ always @(*) begin
             wr_next_state <= WR_IDLE;
     endcase
 end
+
+// tagv ram and data ram
 
 endmodule
