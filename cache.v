@@ -161,14 +161,14 @@ TAGV_RAM tagv_way0(
     .dina(tagv_way0_wdata),
     .douta(tagv_way0_rdata),
     .wea(tagv_way0_wen)
-    );
+);
 TAGV_RAM tagv_way1(
     .addra(tagv_way1_addr),
     .clka(clk),
     .dina(tagv_way1_wdata),
     .douta(tagv_way1_rdata),
     .wea(tagv_way1_wen)
-    );
+);
 
 // bank ram
 BANK_RAM bank0_way0(
@@ -177,56 +177,56 @@ BANK_RAM bank0_way0(
     .dina(bank0_way0_wdata),
     .douta(bank0_way0_rdata),
     .wea(bank0_way0_wen)
-    );
+);
 BANK_RAM bank1_way0(
     .addra(bank1_way0_addr),
     .clka(clk),
     .dina(bank1_way0_wdata),
     .douta(bank1_way0_rdata),
     .wea(bank1_way0_wen)
-    );
+);
 BANK_RAM bank2_way0(
     .addra(bank2_way0_addr),
     .clka(clk),
     .dina(bank2_way0_wdata),
     .douta(bank2_way0_rdata),
     .wea(bank2_way0_wen)
-    );
+);
 BANK_RAM bank3_way0(
     .addra(bank3_way0_addr),
     .clka(clk),
     .dina(bank3_way0_wdata),
     .douta(bank3_way0_rdata),
     .wea(bank3_way0_wen)
-    );
+);
 BANK_RAM bank0_way1(
     .addra(bank0_way1_addr),
     .clka(clk),
     .dina(bank0_way1_wdata),
     .douta(bank0_way1_rdata),
     .wea(bank0_way1_wen)
-    );
+);
 BANK_RAM bank1_way1(
     .addra(bank1_way1_addr),
     .clka(clk),
     .dina(bank1_way1_wdata),
     .douta(bank1_way1_rdata),
     .wea(bank1_way1_wen)
-    );
+);
 BANK_RAM bank2_way1(
     .addra(bank2_way1_addr),
     .clka(clk),
     .dina(bank2_way1_wdata),
     .douta(bank2_way1_rdata),
     .wea(bank2_way1_wen)
-    );
+);
 BANK_RAM bank3_way1(
     .addra(bank3_way1_addr),
     .clka(clk),
     .dina(bank3_way1_wdata),
     .douta(bank3_way1_rdata),
     .wea(bank3_way1_wen)
-    );
+);
 
 // main fsm
 always @(posedge clk) begin
